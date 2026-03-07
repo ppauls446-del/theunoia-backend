@@ -1,12 +1,13 @@
+import { Target } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const socialLinks = [
   { name: 'Facebook', className: 'facebook', url: '#' },
-  { name: 'LinkedIn', className: 'linkedin', url: '#' },
+  { name: 'LinkedIn', className: 'linkedin', url: 'https://www.linkedin.com/company/theunoia/' },
   { name: 'X', className: 'x', url: '#' },
   { name: 'YouTube', className: 'youtube', url: '#' },
-  { name: 'Instagram', className: 'instagram', url: '#' },
+  { name: 'Instagram', className: 'instagram', url: 'https://www.instagram.com/theunoia_?igsh=Y2xjcG41ZTNic2Vw&utm_source=qr' },
 ];
 
 const quickLinks = [
@@ -14,7 +15,7 @@ const quickLinks = [
   { name: 'BLOG', url: '/blog' },
   { name: "FAQ's", url: '/faq' },
   { name: 'CONTACT', url: '/contact' },
-  { name: 'SUPPORT', url: '#' },
+  { name: 'SUPPORT', url: 'https://helpmenow-theunoia.com/' },
 ];
 
 const legalLinks = [
@@ -41,7 +42,7 @@ const Footer = () => {
           <ul className="social-icons">
             {socialLinks.map((social) => (
               <li key={social.name} className={social.className}>
-                <a href={social.url}>{social.name}</a>
+                <a target='_blank' rel="noopener noreferrer" href={social.url}>{social.name}</a>
               </li>
             ))}
           </ul>

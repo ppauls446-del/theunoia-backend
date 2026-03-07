@@ -14,7 +14,7 @@ serve(async (req) => {
     }
 
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, projectId } = await req.json();
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
             throw new Error("Missing payment verification details");
@@ -37,19 +37,37 @@ serve(async (req) => {
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // We will insert/update the `payments` record to track this transaction securely
+        // 1. Log payment record securely
         const { error: paymentError } = await supabase
             .from("payments")
             .upsert({
                 razorpay_order_id: razorpay_order_id,
                 razorpay_payment_id: razorpay_payment_id,
+                project_id: projectId, // Link project if provided
                 status: "captured",
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'razorpay_order_id' });
 
         if (paymentError) {
             console.error("Error logging payment record:", paymentError);
-            // Non-blocking but good to log
+        }
+
+        // 2. Automate Project Completion!
+        if (projectId) {
+            console.log(`Marking project ${projectId} as completed after payment verification...`);
+            const { error: projectError } = await supabase
+                .from("user_projects")
+                .update({
+                    status: 'completed',
+                    completed_at: new Date().toISOString()
+                })
+                .eq("id", projectId);
+
+            if (projectError) {
+                console.error("Error updating project status to completed:", projectError);
+                // We return failure if project update fails to ensure consistency
+                throw new Error("Payment verified but failed to update project status");
+            }
         }
 
         return new Response(

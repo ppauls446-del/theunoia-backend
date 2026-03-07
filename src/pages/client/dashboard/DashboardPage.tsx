@@ -39,6 +39,7 @@ import { InvoiceService } from "@/services/invoiceService";
 import { ProjectTrackingService } from "@/services/ProjectTrackingService";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { PROJECT_VIDEOS } from "@/utils/randomVideo";
 
 // Performance analytics per project (calculated from real data).
 interface PerfMetrics {
@@ -403,9 +404,14 @@ const DashboardPage = () => {
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200 dark:bg-gray-700">
-                    <Folder className="w-12 h-12 text-gray-400" />
-                  </div>
+                  <video
+                    src={encodeURI(PROJECT_VIDEOS[currentProject.id.charCodeAt(0) % PROJECT_VIDEOS.length])}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
               </div>
@@ -791,8 +797,8 @@ const DashboardPage = () => {
             <Link
               to="/client/contracts"
               className={`inline-flex items-center justify-center h-8 px-4 rounded-lg text-xs font-bold transition-colors shadow-md ${profile?.client_contract_signed
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200"
-                  : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20"
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-200"
+                : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20"
                 }`}
             >
               {profile?.client_contract_signed ? "View Contract" : "Sign Contract"}

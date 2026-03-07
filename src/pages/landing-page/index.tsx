@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import IntroSection from './components/IntroSection';
+import ScrollIntro from './components/ScrollIntro';
 import ServicesSection from './components/ServicesSection';
 import StatsGrid from './components/StatsGrid';
 import Testimonials from './components/Testimonials';
@@ -21,6 +22,7 @@ const LandingPage = () => {
       <Navbar />
       <Hero />
       <IntroSection />
+      <ScrollIntro/>
       <ServicesSection />
       <StatsGrid />
       <Testimonials />

@@ -15,10 +15,15 @@
   --lp-brown: #7a4b12;
 
   /* Reset for landing page */
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
   background: var(--lp-bg-main);
   color: var(--lp-text-primary);
   min-height: 100vh;
+
 }
 
 /* ================= NAVBAR ================= */
@@ -101,7 +106,9 @@
   font-weight: 600;
   cursor: pointer;
   background: transparent;
-  transition: color 0.35s ease, border-color 0.35s ease;
+  transition:
+    color 0.35s ease,
+    border-color 0.35s ease;
 }
 
 .landing-page .landing-btn span {
@@ -115,7 +122,7 @@
   inset: 0;
   background: var(--lp-primary);
   transform: translateX(-100%);
-  transition: transform 0.45s cubic-bezier(.22,1,.36,1);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 0;
 }
 
@@ -166,11 +173,11 @@
   transform: translateY(30px);
   pointer-events: none;
   transition:
-    opacity .3s ease,
-    transform .4s cubic-bezier(.22,1,.36,1);
+    opacity 0.3s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   box-shadow:
-    0 60px 120px rgba(15,23,42,.18),
-    0 25px 50px rgba(15,23,42,.12);
+    0 60px 120px rgba(15, 23, 42, 0.18),
+    0 25px 50px rgba(15, 23, 42, 0.12);
   z-index: 999;
 }
 
@@ -208,7 +215,7 @@
   border-radius: 18px;
   padding: 24px;
   text-align: center;
-  box-shadow: 0 20px 40px rgba(15,23,42,.12);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
 }
 
 .landing-page .aside-card h4 {
@@ -231,98 +238,400 @@
   transform: rotate(180deg);
 }
 
-/* ================= MOBILE NAV ================= */
+/* =========================================
+   MOBILE NAV TOGGLE (HAMBURGER BUTTON)
+   Hidden on desktop, shown on mobile
+========================================= */
 
 .landing-page .landing-nav-toggle {
   display: none;
   flex-direction: column;
-  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  width: 44px;
+  height: 44px;
   background: none;
   border: none;
   cursor: pointer;
+  position: relative;
+  z-index: 1001;
+  flex-shrink: 0;
 }
 
+/* The three spans form the hamburger lines */
 .landing-page .landing-nav-toggle span {
-  width: 26px;
-  height: 2.5px;
+  display: block;
+  width: 24px;
+  height: 2px;
   background: var(--lp-text-primary);
   border-radius: 4px;
+  transition:
+    transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 0.25s ease,
+    width 0.3s ease;
+  position: absolute;
 }
 
-/* ================= RESPONSIVE NAV ================= */
+/* Stagger the three lines vertically */
+.landing-page .landing-nav-toggle span:nth-child(1) {
+  transform: translateY(-8px);
+}
+.landing-page .landing-nav-toggle span:nth-child(2) {
+  transform: translateY(0px);
+}
+.landing-page .landing-nav-toggle span:nth-child(3) {
+  transform: translateY(8px);
+}
+
+/* Hamburger → X animation when nav is open */
+.landing-page .landing-nav-toggle.is-open span:nth-child(1) {
+  transform: translateY(0) rotate(45deg);
+}
+.landing-page .landing-nav-toggle.is-open span:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+.landing-page .landing-nav-toggle.is-open span:nth-child(3) {
+  transform: translateY(0) rotate(-45deg);
+}
+
+/* =========================================
+   MOBILE OVERLAY BACKDROP
+   Translucent overlay behind the open menu
+========================================= */
+
+.landing-page .nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 996;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+  pointer-events: none;
+}
+
+/* =========================================
+   @media ≤ 1024px  — MOBILE / TABLET NAV
+========================================= */
 
 @media (max-width: 1024px) {
-  .landing-page .landing-navbar { 
-    padding: 0 24px; 
-  }
-  
-  .landing-page .landing-nav-toggle { 
-    display: flex; 
+
+  /* ── Navbar: scrolls with the page by default ── */
+  .landing-page .landing-navbar {
+    height: 70px;
+    padding: 0 20px;
+    position: relative;   /* NOT fixed — scrolls normally */
+    z-index: 100;
+    box-shadow: 0 1px 0 var(--lp-border-light);
   }
 
-  .landing-page .landing-nav-links,
-  .landing-page .landing-nav-actions {
+  /* When menu is OPEN: pin navbar to top so the full-screen panel
+     sits correctly below it. Body scroll is locked at the same time
+     so the user never sees the layout jump. */
+  body.nav-open .landing-page .landing-navbar {
     position: fixed;
+    top: 0;
     left: 0;
     right: 0;
-    background: #fff;
+    z-index: 1001;
+  }
+
+  /* Show hamburger */
+  .landing-page .landing-nav-toggle {
+    display: flex;
+    order: 3;
+  }
+
+  /* ── Full-screen menu panel — sits below the navbar bar ── */
+  .landing-page .landing-nav-links {
+    position: fixed;
+    top: 70px;          /* directly under the 70px navbar bar */
+    left: 0;
+    right: 0;
+    bottom: 80px;       /* leave room for the pinned Login/Sign-Up bar */
+    background: #ffffff;
     flex-direction: column;
-    gap: 28px;
-    padding: 40px 24px;
+    align-items: stretch;
+    gap: 0;
+    padding: 0;
+    z-index: 1000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+
+    /* Hidden state */
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-20px);
-    transition: all .35s ease;
-    z-index: 998;
+    transform: translateY(-6px);
+    transition:
+      opacity   0.3s ease,
+      transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+      visibility 0s linear 0.3s;
   }
 
-  .landing-page .landing-nav-links { 
-    top: 100px; 
-  }
-  
-  .landing-page .landing-nav-actions { 
-    bottom: 0; 
+  /* Each nav link: full-width tap target */
+  .landing-page .landing-nav-links a {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 18px 24px;
+    font-size: 17px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--lp-border-light);
+    color: var(--lp-text-primary);
+    text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease;
   }
 
-  body.nav-open .landing-page .landing-nav-links,
+  .landing-page .landing-nav-links a:hover,
+  .landing-page .landing-nav-links a:active {
+    background: rgba(112, 78, 134, 0.06);
+    color: var(--lp-primary);
+  }
+
+  /* Remove desktop underline on mobile */
+  .landing-page .landing-nav-links a::after {
+    display: none;
+  }
+
+  /* ── Login / Sign Up — pinned to bottom of viewport ── */
+  .landing-page .landing-nav-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: #ffffff;
+    flex-direction: row;
+    justify-content: stretch;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--lp-border-light);
+    z-index: 1000;
+
+    /* Hidden state */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition:
+      opacity   0.3s ease,
+      transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+      visibility 0s linear 0.3s;
+  }
+
+  .landing-page .landing-nav-actions .landing-btn {
+    flex: 1;
+    text-align: center;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  /* ── OPEN STATE ── */
+  body.nav-open .landing-page .landing-nav-links {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition:
+      opacity   0.3s ease,
+      transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+      visibility 0s linear 0s;
+  }
+
   body.nav-open .landing-page .landing-nav-actions {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+    transition:
+      opacity   0.3s ease,
+      transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+      visibility 0s linear 0s;
   }
 
-  /* Mobile aside */
+  /* Lock page scroll while menu is open */
+  body.nav-open {
+    overflow: hidden;
+  }
+
+  /* --- MOBILE ASIDE — Bottom sheet --- */
   .landing-page .creations-aside {
-    top: auto;
+    position: fixed;
+    top: auto !important;
     bottom: 0;
-    max-height: 70vh;
+    left: 0;
+    right: 0;
+    max-height: 75vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: 24px 24px 0 0;
     transform: translateY(100%);
+    opacity: 1;
+    visibility: hidden;
+    z-index: 1002;
+    transition:
+      transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+      visibility 0s linear 0.4s;
+  }
+
+  .landing-page .creations-aside::before {
+    /* Remove hover-bridge gap on mobile */
+    display: none;
+  }
+
+  /* Drag handle pill */
+  .landing-page .creations-aside::after {
+    content: "";
+    position: sticky;
+    top: 0;
+    display: block;
+    width: 44px;
+    height: 4px;
+    background: rgba(15, 23, 42, 0.18);
+    border-radius: 4px;
+    margin: 14px auto 0;
   }
 
   .landing-page .creations-aside.open {
     transform: translateY(0);
+    visibility: visible;
+    transition:
+      transform 0.4s cubic-bezier(0.23, 1, 0.32, 1),
+      visibility 0s linear 0s;
+  }
+
+  /* Aside grid: 2 columns on mobile */
+  .landing-page .aside-grid {
+    padding: 16px 16px 40px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  /* Smaller aside cards */
+  .landing-page .aside-card {
+    height: 120px;
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 12px;
+  }
+
+  .landing-page .aside-card h4 {
+    font-size: 11px;
+    margin-top: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  /* dropdown chevron spacing on mobile */
+  .landing-page .landing-nav-links a.has-creations {
+    justify-content: space-between;
+  }
+
+  .landing-page .landing-nav-links a.has-creations .dropdown-icon {
+    font-size: 14px;
+  }
+}
+
+/* =========================================
+   @media ≤ 768px  — PHONE LANDSCAPE / SMALL TABLET
+========================================= */
+
+@media (max-width: 768px) {
+  .landing-page .landing-navbar {
+    height: 64px;
+  }
+
+  .landing-page .landing-nav-links {
+    top: 64px;   /* stay below the 64px bar */
+  }
+
+  .landing-page .landing-logo img {
+    height: 36px;
   }
 
   .landing-page .aside-grid {
-    padding: 32px 24px 48px;
     grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    gap: 12px;
+    padding: 14px 14px 36px;
+  }
+}
+
+/* =========================================
+   @media ≤ 425px  — LARGE PHONES
+========================================= */
+
+@media (max-width: 425px) {
+  .landing-page .landing-navbar {
+    padding: 0 16px;
   }
 
-  .landing-page .landing-hero-wrap {
-    padding: 16px;
+  .landing-page .landing-nav-links a {
+    padding: 16px 18px;
+    font-size: 16px;
   }
 
-  body.nav-open .landing-page .landing-hero-wrap {
-    margin-top: 0;
+  .landing-page .landing-nav-actions {
+    padding: 12px 16px;
+    gap: 10px;
+  }
+
+  .landing-page .landing-nav-actions .landing-btn {
+    padding: 13px 16px;
+    font-size: 14px;
+  }
+}
+
+/* =========================================
+   @media ≤ 375px  — STANDARD PHONES
+========================================= */
+
+@media (max-width: 375px) {
+  .landing-page .landing-nav-links a {
+    font-size: 15px;
+    padding: 15px 16px;
+  }
+
+  .landing-page .aside-card {
+    height: 100px;
+  }
+
+  .landing-page .aside-card h4 {
+    font-size: 10px;
+  }
+}
+
+/* =========================================
+   @media ≤ 320px  — SMALL PHONES (SE etc.)
+========================================= */
+
+@media (max-width: 320px) {
+  .landing-page .landing-navbar {
+    padding: 0 12px;
+    height: 60px;
+  }
+
+  .landing-page .landing-nav-links {
+    top: 60px;   /* stay below the 60px bar */
+  }
+
+  .landing-page .landing-logo img {
+    height: 30px;
+  }
+
+  .landing-page .landing-nav-links a {
+    font-size: 14px;
+    padding: 14px;
+  }
+
+  .landing-page .aside-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 /* ===== HERO ===== */
 
-/* OUTER WRAPPER → CREATES WHITE SPACE */
+/* OUTER WRAPPER */
 .landing-page .landing-hero-wrap {
   padding: 48px;
   background: var(--lp-bg-main);
@@ -353,8 +662,8 @@
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(0,0,0,0.35),
-    rgba(0,0,0,0.55)
+    rgba(0, 0, 0, 0.35),
+    rgba(0, 0, 0, 0.55)
   );
 }
 
@@ -376,12 +685,12 @@
   width: 520px;
   max-width: 100%;
   aspect-ratio: 16 / 10;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   overflow: hidden;
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.25);
-  box-shadow: 0 40px 80px rgba(0,0,0,0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.35);
 }
 
 .landing-page .landing-hero-words {
@@ -411,29 +720,32 @@
   backface-visibility: hidden;
 }
 
-.landing-page .landing-hero-face:nth-child(1) { transform: rotateX(0deg) translateZ(70px); }
-.landing-page .landing-hero-face:nth-child(2) { transform: rotateX(90deg) translateZ(70px); }
-.landing-page .landing-hero-face:nth-child(3) { transform: rotateX(180deg) translateZ(70px); }
-.landing-page .landing-hero-face:nth-child(4) { transform: rotateX(270deg) translateZ(70px); }
+.landing-page .landing-hero-face:nth-child(1) {
+  transform: rotateX(0deg) translateZ(70px);
+}
+.landing-page .landing-hero-face:nth-child(2) {
+  transform: rotateX(90deg) translateZ(70px);
+}
+.landing-page .landing-hero-face:nth-child(3) {
+  transform: rotateX(180deg) translateZ(70px);
+}
+.landing-page .landing-hero-face:nth-child(4) {
+  transform: rotateX(270deg) translateZ(70px);
+}
 
 .landing-page .landing-hero-word {
-  font-family: Impact, 'Anton', 'Bebas Neue', 'Arial Black', sans-serif;
+  font-family: Impact, "Anton", "Bebas Neue", "Arial Black", sans-serif;
   font-size: 150px;
   font-weight: 900;
   letter-spacing: -0.03em;
   line-height: 0.8;
   text-transform: uppercase;
   color: #b682f0;
-  -webkit-text-stroke: 1.2px #2b2d2f;
-  text-shadow:
-    0.8px 0 0 #2b2d2f,
-    -0.8px 0 0 #2b2d2f,
-    0 0.8px 0 #2b2d2f,
-    0 -0.8px 0 #2b2d2f;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
 }
 
+/* SUBTITLE */
 .landing-page .landing-hero-text {
   font-family: "Inter", system-ui, -apple-system, sans-serif;
   font-size: 24px;
@@ -442,6 +754,213 @@
   letter-spacing: -0.015em;
   color: rgba(255, 255, 255, 0.9);
   max-width: 540px;
+}
+
+/* =============================================
+   HERO RESPONSIVE — ≤ 1024px TABLET
+============================================= */
+@media (max-width: 1024px) {
+  .landing-page .landing-hero-wrap {
+    padding: 24px;
+  }
+
+  .landing-page .landing-hero {
+    height: calc(100dvh - 70px - 48px);
+    border-radius: 20px;
+  }
+
+  .landing-page .landing-hero-content {
+    padding-left: 40px;
+    gap: 28px;
+  }
+
+  .landing-page .landing-hero-word {
+    font-size: clamp(72px, 11vw, 130px);
+    white-space: nowrap;
+  }
+
+  .landing-page .landing-hero-words-hidden,
+  .landing-page .landing-hero-rotator,
+  .landing-page .landing-hero-face {
+    height: clamp(70px, 11vw, 120px);
+  }
+
+  .landing-page .landing-hero-face:nth-child(1) { transform: rotateX(0deg)   translateZ(clamp(35px, 5.5vw, 60px)); }
+  .landing-page .landing-hero-face:nth-child(2) { transform: rotateX(90deg)  translateZ(clamp(35px, 5.5vw, 60px)); }
+  .landing-page .landing-hero-face:nth-child(3) { transform: rotateX(180deg) translateZ(clamp(35px, 5.5vw, 60px)); }
+  .landing-page .landing-hero-face:nth-child(4) { transform: rotateX(270deg) translateZ(clamp(35px, 5.5vw, 60px)); }
+
+  .landing-page .landing-hero-text {
+    font-size: 18px;
+    max-width: 420px;
+  }
+
+  .landing-page .demo-frame {
+    width: min(380px, 80%);
+  }
+}
+
+/* =============================================
+   HERO RESPONSIVE — ≤ 768px LARGE PHONE
+============================================= */
+@media (max-width: 768px) {
+  .landing-page .landing-hero-wrap {
+    padding: 16px;
+  }
+
+  .landing-page .landing-hero {
+    height: calc(100dvh - 64px - 32px);
+    border-radius: 16px;
+  }
+
+  .landing-page .landing-hero-content {
+    padding-left: 24px;
+    padding-right: 24px;
+    gap: 20px;
+    justify-content: flex-end;
+    padding-bottom: 36px;
+  }
+
+  .landing-page .landing-hero-word {
+    font-size: clamp(52px, 13vw, 90px);
+    -webkit-text-stroke: 0.8px #2b2d2f;
+  }
+
+  .landing-page .landing-hero-words-hidden,
+  .landing-page .landing-hero-rotator,
+  .landing-page .landing-hero-face {
+    height: clamp(50px, 13vw, 85px);
+  }
+
+  .landing-page .landing-hero-face:nth-child(1) { transform: rotateX(0deg)   translateZ(clamp(25px, 6.5vw, 42px)); }
+  .landing-page .landing-hero-face:nth-child(2) { transform: rotateX(90deg)  translateZ(clamp(25px, 6.5vw, 42px)); }
+  .landing-page .landing-hero-face:nth-child(3) { transform: rotateX(180deg) translateZ(clamp(25px, 6.5vw, 42px)); }
+  .landing-page .landing-hero-face:nth-child(4) { transform: rotateX(270deg) translateZ(clamp(25px, 6.5vw, 42px)); }
+
+  .landing-page .landing-hero-text {
+    font-size: 15px;
+    max-width: 100%;
+    letter-spacing: -0.01em;
+  }
+
+  /* Demo frame hidden — not enough room on phones */
+  .landing-page .demo-frame {
+    display: none;
+  }
+}
+
+/* =============================================
+   HERO RESPONSIVE — ≤ 425px STANDARD PHONE
+============================================= */
+@media (max-width: 425px) {
+  .landing-page .landing-hero-wrap {
+    padding: 12px;
+  }
+
+  .landing-page .landing-hero {
+    height: calc(100dvh - 64px - 24px);
+    border-radius: 14px;
+  }
+
+  .landing-page .landing-hero-content {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 28px;
+    gap: 16px;
+  }
+
+  .landing-page .landing-hero-word {
+    font-size: clamp(44px, 14vw, 72px);
+    -webkit-text-stroke: 0.6px #2b2d2f;
+  }
+
+  .landing-page .landing-hero-words-hidden,
+  .landing-page .landing-hero-rotator,
+  .landing-page .landing-hero-face {
+    height: clamp(42px, 14vw, 68px);
+  }
+
+  .landing-page .landing-hero-face:nth-child(1) { transform: rotateX(0deg)   translateZ(clamp(21px, 7vw, 34px)); }
+  .landing-page .landing-hero-face:nth-child(2) { transform: rotateX(90deg)  translateZ(clamp(21px, 7vw, 34px)); }
+  .landing-page .landing-hero-face:nth-child(3) { transform: rotateX(180deg) translateZ(clamp(21px, 7vw, 34px)); }
+  .landing-page .landing-hero-face:nth-child(4) { transform: rotateX(270deg) translateZ(clamp(21px, 7vw, 34px)); }
+
+  .landing-page .landing-hero-text {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+/* =============================================
+   HERO RESPONSIVE — ≤ 375px SMALL PHONE
+============================================= */
+@media (max-width: 375px) {
+  .landing-page .landing-hero-wrap {
+    padding: 10px;
+  }
+
+  .landing-page .landing-hero {
+    height: calc(100dvh - 64px - 20px);
+    border-radius: 12px;
+  }
+
+  .landing-page .landing-hero-word {
+    font-size: clamp(38px, 13.5vw, 60px);
+  }
+
+  .landing-page .landing-hero-words-hidden,
+  .landing-page .landing-hero-rotator,
+  .landing-page .landing-hero-face {
+    height: clamp(36px, 13.5vw, 58px);
+  }
+
+  .landing-page .landing-hero-face:nth-child(1) { transform: rotateX(0deg)   translateZ(clamp(18px, 6.75vw, 29px)); }
+  .landing-page .landing-hero-face:nth-child(2) { transform: rotateX(90deg)  translateZ(clamp(18px, 6.75vw, 29px)); }
+  .landing-page .landing-hero-face:nth-child(3) { transform: rotateX(180deg) translateZ(clamp(18px, 6.75vw, 29px)); }
+  .landing-page .landing-hero-face:nth-child(4) { transform: rotateX(270deg) translateZ(clamp(18px, 6.75vw, 29px)); }
+
+  .landing-page .landing-hero-text {
+    font-size: 13px;
+  }
+}
+
+/* =============================================
+   HERO RESPONSIVE — ≤ 320px SE / TINY
+============================================= */
+@media (max-width: 320px) {
+  .landing-page .landing-hero-wrap {
+    padding: 8px;
+  }
+
+  .landing-page .landing-hero {
+    height: calc(100dvh - 60px - 16px);
+    border-radius: 10px;
+  }
+
+  .landing-page .landing-hero-content {
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 24px;
+  }
+
+  .landing-page .landing-hero-word {
+    font-size: clamp(34px, 13vw, 52px);
+  }
+
+  .landing-page .landing-hero-words-hidden,
+  .landing-page .landing-hero-rotator,
+  .landing-page .landing-hero-face {
+    height: clamp(32px, 13vw, 50px);
+  }
+
+  .landing-page .landing-hero-face:nth-child(1) { transform: rotateX(0deg)   translateZ(clamp(16px, 6.5vw, 25px)); }
+  .landing-page .landing-hero-face:nth-child(2) { transform: rotateX(90deg)  translateZ(clamp(16px, 6.5vw, 25px)); }
+  .landing-page .landing-hero-face:nth-child(3) { transform: rotateX(180deg) translateZ(clamp(16px, 6.5vw, 25px)); }
+  .landing-page .landing-hero-face:nth-child(4) { transform: rotateX(270deg) translateZ(clamp(16px, 6.5vw, 25px)); }
+
+  .landing-page .landing-hero-text {
+    font-size: 12px;
+  }
 }
 
 /* =======================
@@ -473,7 +992,7 @@
   width: 180px;
   height: 180px;
   border-radius: 20px;
-  background: linear-gradient(135deg, var(--lp-primary), #5b45c9);
+  background: var(--lp-primary);
   transform: scale(0) rotate(0deg);
   will-change: transform;
   z-index: 1;
@@ -526,8 +1045,9 @@
   justify-content: center;
   opacity: 0;
   transform: translateY(30px);
-  transition: transform 0.8s cubic-bezier(0.34,1.56,0.64,1),
-              opacity 0.8s ease;
+  transition:
+    transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.8s ease;
 }
 
 .landing-page .intro-header.visible {
@@ -543,15 +1063,8 @@
   font-weight: 600;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
   margin-bottom: 20px;
-}
-
-.landing-page .intro-label::before {
-  content: "";
-  width: 40px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--lp-accent-text), transparent);
 }
 
 .landing-page .intro-main-title {
@@ -575,8 +1088,9 @@
   padding-top: 20px;
   opacity: 0;
   transform: translateX(-40px);
-  transition: transform 0.8s cubic-bezier(0.34,1.56,0.64,1),
-              opacity 0.8s ease;
+  transition:
+    transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.8s ease;
 }
 
 .landing-page .intro-video-section.visible {
@@ -592,17 +1106,18 @@
   border-radius: 24px;
   background: #000;
   box-shadow:
-    0 20px 60px rgba(0,0,0,0.5),
-    0 0 0 1px rgba(255,255,255,0.1);
-  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
-              box-shadow 0.4s ease;
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.4s ease;
 }
 
 .landing-page .video-container:hover {
   transform: translateY(-8px);
   box-shadow:
-    0 30px 80px rgba(0,0,0,0.6),
-    0 0 60px rgba(126,99,248,0.3);
+    0 30px 80px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(126, 99, 248, 0.3);
 }
 
 .landing-page .intro-video {
@@ -627,9 +1142,9 @@
   gap: 14px;
   padding: 12px 18px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   opacity: 0;
   transform: translateY(10px);
   transition: all 0.3s ease;
@@ -653,7 +1168,7 @@
   height: 5px;
   border-radius: 999px;
   appearance: none;
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* =======================
@@ -666,8 +1181,9 @@
   padding-left: 48px;
   opacity: 0;
   transform: translateX(40px);
-  transition: transform 0.8s cubic-bezier(0.34,1.56,0.64,1),
-              opacity 0.8s ease;
+  transition:
+    transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.8s ease;
 }
 
 .landing-page .intro-text-section.visible {
@@ -690,7 +1206,7 @@
     var(--lp-secondary) 100%
   );
   color: var(--lp-secondary-text);
-  box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
 }
 
 /* TEXT */
@@ -707,7 +1223,7 @@
 
 .landing-page .pricing-divider {
   height: 1px;
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
   margin: 22px 0;
   position: relative;
 }
@@ -738,7 +1254,7 @@
 
 .landing-page .pricing-features span {
   font-size: 14px;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .landing-page .pricing-subtitle {
@@ -753,7 +1269,7 @@
   text-align: center;
   font-size: 14.5px;
   line-height: 1.7;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .landing-page .pricing-cta {
@@ -766,33 +1282,272 @@
   color: var(--lp-secondary-text);
 }
 
-/* =======================
-   RESPONSIVE INTRO
-======================= */
-
+/* =============================================
+   INTRO / STICKY RESPONSIVE — ≤ 1024px TABLET
+============================================= */
 @media (max-width: 1024px) {
-  .landing-page .intro-layout {
-    grid-template-columns: 1fr;
+
+  /* Reduce total scroll length slightly */
+  .landing-page .section-home-intro {
+    height: 250vh;
   }
 
-  .landing-page .intro-left,
+  .landing-page .sticky-wrapper {
+    padding: 0 24px;
+  }
+
+  /* Scale animation square down */
+  .landing-page .animation-square {
+    width: 140px;
+    height: 140px;
+    border-radius: 16px;
+  }
+
+  /* 2-column → slightly narrower right */
+  .landing-page .intro-layout {
+    grid-template-columns: 55% 45%;
+    gap: 0;
+  }
+
+  .landing-page .intro-left {
+    padding-right: 28px;
+  }
+
   .landing-page .intro-text-section {
-    padding: 0;
+    padding-left: 28px;
+  }
+
+  .landing-page .intro-card.pricing-style {
+    max-width: 100%;
+    padding: 32px 24px;
+  }
+}
+
+/* =============================================
+   INTRO / STICKY RESPONSIVE — ≤ 768px PHONE
+============================================= */
+@media (max-width: 768px) {
+
+  .landing-page .section-home-intro {
+    height: 220vh;
+  }
+
+  /* Column direction so flex children stack vertically and fill height */
+  .landing-page .sticky-wrapper {
+    flex-direction: column;
+    align-items: stretch;       /* children fill full width */
+    justify-content: flex-start;
+    padding: 48px 16px 16px;
+  }
+
+  .landing-page .animation-square {
+    width: 110px;
+    height: 110px;
+    border-radius: 14px;
+    top: 50%;
+    left: 50%;
+    margin-top: -55px;
+    margin-left: -55px;
+  }
+
+  /* intro-content fills remaining height (sticky-wrapper is 100vh) */
+  .landing-page .intro-content {
+    flex: 1;
+    min-height: 0;          /* allow flex child to shrink below content size */
+    display: flex;
+    flex-direction: column;
+    padding: 0;             /* remove side padding — sticky-wrapper handles it */
+  }
+
+  /* intro-layout: single column, fill parent height */
+  .landing-page .intro-layout {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    height: auto;
+  }
+
+  /* intro-left: flex column, fill layout height */
+  .landing-page .intro-left {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-right: 0;
+    height: auto;
+  }
+
+  /* Header: stays at its natural height */
+  .landing-page .intro-header {
+    flex-shrink: 0;
+    transform: translateY(16px);
+  }
+
+  .landing-page .intro-label {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .landing-page .intro-main-title {
+    font-size: clamp(28px, 7.5vw, 44px);
+    line-height: 1.15;
+  }
+
+  /* Video section: flex:1 fills ALL remaining space below the header */
+  .landing-page .intro-video-section {
+    flex: 1;
+    min-height: 0;          /* critical — no min-height: auto */
+    transform: translateX(0);
+    padding-top: 0;
+    align-items: stretch;
+  }
+
+  /* Video container fills its parent (intro-video-section) */
+  .landing-page .video-container {
+    height: 100%;
+    border-radius: 16px;
+  }
+
+  .landing-page .video-controls {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  /* Hide pricing card */
+  .landing-page .intro-text-section {
+    display: none;
+  }
+}
+
+
+
+/* =============================================
+   INTRO / STICKY RESPONSIVE — ≤ 425px PHONE
+============================================= */
+@media (max-width: 425px) {
+
+  .landing-page .section-home-intro {
+    height: 200vh;
+  }
+
+  .landing-page .sticky-wrapper {
+    padding: 44px 14px 14px;
+  }
+
+  .landing-page .animation-square {
+    width: 90px;
+    height: 90px;
+    border-radius: 12px;
+    top: 50%;
+    left: 50%;
+    margin-top: -45px;
+    margin-left: -45px;
+  }
+
+  .landing-page .intro-main-title {
+    font-size: clamp(26px, 9vw, 36px);
+  }
+
+  .landing-page .video-container {
+    border-radius: 12px;
+  }
+}
+
+/* =============================================
+   INTRO / STICKY RESPONSIVE — ≤ 375px PHONE
+============================================= */
+@media (max-width: 375px) {
+
+  .landing-page .section-home-intro {
+    height: 190vh;
+  }
+
+  .landing-page .sticky-wrapper {
+    padding: 40px 12px 12px;
+  }
+
+  .landing-page .animation-square {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    top: 50%;
+    left: 50%;
+    margin-top: -40px;
+    margin-left: -40px;
+  }
+
+  .landing-page .intro-main-title {
+    font-size: clamp(24px, 8.5vw, 32px);
+  }
+}
+
+/* =============================================
+   INTRO / STICKY RESPONSIVE — ≤ 320px SE
+============================================= */
+@media (max-width: 320px) {
+
+  .landing-page .section-home-intro {
+    height: 180vh;
+  }
+
+  .landing-page .sticky-wrapper {
+    padding: 0 10px;
+    padding-top: 32px;
+  }
+
+  .landing-page .animation-square {
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+    top: 50%;
+    left: 50%;
+    margin-top: -35px;   /* -(70/2) */
+    margin-left: -35px;
+  }
+
+  .landing-page .intro-layout {
+    gap: 16px;
+  }
+
+  .landing-page .intro-main-title {
+    font-size: clamp(22px, 8vw, 28px);
+  }
+
+  .landing-page .sticky-wrapper {
+    padding: 32px 10px 10px;
+  }
+
+  .landing-page .video-container {
+    border-radius: 10px;
   }
 }
 
 /* ===== OUR SERVICES ===== */
 
 .landing-page .services-container {
-  margin-top: 100px;
+  padding-top: 100px;
+  padding-bottom: 150px;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+.landing-page .our-services {
+  background-image: url("/images/ourservices.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .landing-page .our-services h1 {
-  color: #7e63f8;
+  color: #000000;
   font-size: 4rem;
   margin-bottom: 4rem;
   font-weight: 900;
@@ -855,7 +1610,7 @@
   background: #333;
   border-radius: 16px 16px 0 0;
   opacity: 0;
-  transition: 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  transition: 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
 }
 
@@ -865,16 +1620,34 @@
   object-fit: cover;
 }
 
-.landing-page .service-card:hover .file-peek:nth-child(1) { width: 91%; }
-.landing-page .service-card:hover .file-peek:nth-child(2) { width: 93%; }
-.landing-page .service-card:hover .file-peek:nth-child(3) { width: 96%; }
-.landing-page .service-card:hover .file-peek:nth-child(4) { width: 99%; }
+.landing-page .service-card:hover .file-peek:nth-child(1) {
+  width: 91%;
+}
+.landing-page .service-card:hover .file-peek:nth-child(2) {
+  width: 93%;
+}
+.landing-page .service-card:hover .file-peek:nth-child(3) {
+  width: 96%;
+}
+.landing-page .service-card:hover .file-peek:nth-child(4) {
+  width: 99%;
+}
 
-.landing-page .service-card:hover .file-peek { opacity: 1; }
-.landing-page .service-card:hover .file-peek:nth-child(1) { top: -90px; }
-.landing-page .service-card:hover .file-peek:nth-child(2) { top: -65px; }
-.landing-page .service-card:hover .file-peek:nth-child(3) { top: -40px; }
-.landing-page .service-card:hover .file-peek:nth-child(4) { top: -15px; }
+.landing-page .service-card:hover .file-peek {
+  opacity: 1;
+}
+.landing-page .service-card:hover .file-peek:nth-child(1) {
+  top: -90px;
+}
+.landing-page .service-card:hover .file-peek:nth-child(2) {
+  top: -65px;
+}
+.landing-page .service-card:hover .file-peek:nth-child(3) {
+  top: -40px;
+}
+.landing-page .service-card:hover .file-peek:nth-child(4) {
+  top: -15px;
+}
 
 /* Front card */
 .landing-page .card-front {
@@ -932,29 +1705,278 @@
   font-size: 0.75rem;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.15);
+  background: rgba(0, 0, 0, 0.15);
   color: #73480d;
   font-weight: 600;
   white-space: nowrap;
 }
 
-/* Responsive Services */
-@media(max-width:768px) {
-  .landing-page .services-list { width: 95%; }
-  .landing-page .service-card { height: 260px; }
-  .landing-page .card-front { 
+/* ======================================
+   SERVICES — ≤ 1024px TABLET
+====================================== */
+@media (max-width: 1024px) {
+  .landing-page .services-container {
+    padding-top: 72px;
+    padding-bottom: 100px;
+  }
+  .landing-page .our-services h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    margin-bottom: 2.5rem;
+  }
+  .landing-page .services-list {
+    width: 92%;
+    gap: 1.5rem;
+  }
+
+  /*
+   * height: auto + min-height so the card expands when titles wrap.
+   * card-front is position:absolute by default — it needs a pixel-height
+   * parent to fill with inset:0. Switch the whole stack to relative flow
+   * so height is driven by content, not a fixed value.
+   */
+  .landing-page .service-card {
+    height: auto;
+    min-height: 160px;
+  }
+  .landing-page .file-stack {
+    height: auto;     /* lets card-front (now relative) size to content */
+  }
+  .landing-page .card-front {
+    position: relative;   /* in-flow instead of absolute */
+    inset: auto;
+    padding: 2rem 2.2rem;
+    gap: 2rem;
+    /* Keep desktop 2-column for tablets */
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+  }
+  .landing-page .service-card h3 {
+    font-size: 1.85rem;
+  }
+  .landing-page .service-card:hover .file-peek:nth-child(1) {
+    top: -88px;   /* 22px × 4 — topmost, furthest above card */
+  }
+  .landing-page .service-card:hover .file-peek:nth-child(2) {
+    top: -66px;   /* 22px × 3 */
+  }
+  .landing-page .service-card:hover .file-peek:nth-child(3) {
+    top: -44px;   /* 22px × 2 */
+  }
+  .landing-page .service-card:hover .file-peek:nth-child(4) {
+    top: -22px;   /* 22px × 1 — closest to card edge */
+  }
+}
+
+/* ======================================
+   SERVICES — ≤ 880px NARROW TABLET
+   (2-column grid gets cramped → tighten)
+====================================== */
+@media (max-width: 880px) {
+  .landing-page .our-services h1 {
+    font-size: clamp(1.85rem, 4.5vw, 2.4rem);
+  }
+  .landing-page .services-list {
+    width: 96%;
+    gap: 1.25rem;
+  }
+  .landing-page .card-front {
+    padding: 1.6rem 1.75rem;
+    gap: 1.5rem;
+    grid-template-columns: 1.3fr 1fr;
+  }
+  .landing-page .service-card h3 {
+    font-size: 1.55rem;
+  }
+  .landing-page .card-content-right {
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  .landing-page .skill {
+    font-size: 0.7rem;
+    padding: 5px 8px;
+  }
+}
+
+
+/* ======================================
+   SERVICES — ≤ 768px PHONE
+====================================== */
+@media (max-width: 768px) {
+  .landing-page .services-container {
+    padding-top: 52px;
+    padding-bottom: 70px;
+  }
+  .landing-page .our-services h1 {
+    font-size: clamp(1.8rem, 7vw, 2.4rem);
+    margin-bottom: 1.75rem;
+    text-align: center;
+  }
+  .landing-page .services-list {
+    width: 100%;
+    padding: 0 16px;
+    gap: 1.25rem;
+  }
+
+  /* height:auto so stacked content doesn't clip */
+  .landing-page .service-card {
+    height: auto;
+    perspective: none;
+  }
+
+  /* hover-only animation — hide on touch */
+  .landing-page .file-peek {
+    display: none;
+  }
+
+  /*
+   * card-front is position:absolute on desktop.
+   * When service-card is height:auto, absolute children
+   * have no reference height → collapse to 0.
+   * Switch to position:relative so it flows naturally.
+   */
+  .landing-page .card-front {
+    position: relative;
+    inset: auto;
+    display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
-    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 18px 16px;
+    border-radius: 16px;
+    grid-template-columns: unset;
   }
-  .landing-page .service-card h3 { font-size: 1.6rem; }
+
+  /* rotateX hover jarring on tap — disable */
+  .landing-page .service-card:hover .card-front {
+    transform: none;
+  }
+  .landing-page .service-card h3 {
+    font-size: clamp(1.05rem, 4.5vw, 1.35rem);
+    line-height: 1.2;
+  }
+  .landing-page .card-content-right {
+    font-size: 0.83rem;
+    max-width: 100%;
+    line-height: 1.55;
+  }
+  .landing-page .skills {
+    gap: 5px;
+    max-width: 100%;
+    margin-top: 6px;
+  }
+  .landing-page .skill {
+    font-size: 0.68rem;
+    padding: 4px 9px;
+  }
+  .landing-page .service-card::before {
+    inset: -2px;
+    filter: blur(12px);
+    opacity: 0.4;
+  }
+}
+
+/* ======================================
+   SERVICES — ≤ 425px LARGE PHONE
+====================================== */
+@media (max-width: 425px) {
+  .landing-page .services-container {
+    padding-top: 44px;
+    padding-bottom: 56px;
+  }
+  .landing-page .our-services h1 {
+    font-size: clamp(1.5rem, 7.5vw, 1.9rem);
+    margin-bottom: 1.25rem;
+  }
+  .landing-page .services-list {
+    padding: 0 12px;
+    gap: 1rem;
+  }
+  .landing-page .card-front {
+    padding: 16px 14px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+  .landing-page .service-card h3 {
+    font-size: clamp(0.95rem, 5vw, 1.15rem);
+  }
+  .landing-page .card-content-right {
+    font-size: 0.78rem;
+  }
+  .landing-page .skill {
+    font-size: 0.63rem;
+    padding: 4px 8px;
+  }
+}
+
+/* ======================================
+   SERVICES — ≤ 375px SMALL PHONE
+====================================== */
+@media (max-width: 375px) {
+  .landing-page .services-container {
+    padding-top: 36px;
+    padding-bottom: 48px;
+  }
+  .landing-page .our-services h1 {
+    font-size: clamp(1.3rem, 7vw, 1.65rem);
+    margin-bottom: 1rem;
+  }
+  .landing-page .services-list {
+    padding: 0 10px;
+    gap: 0.875rem;
+  }
+  .landing-page .card-front {
+    padding: 14px 12px;
+    border-radius: 12px;
+    gap: 6px;
+  }
+  .landing-page .service-card h3 {
+    font-size: clamp(0.9rem, 5vw, 1.05rem);
+  }
+  .landing-page .card-content-right {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+  .landing-page .skill {
+    font-size: 0.6rem;
+    padding: 3px 7px;
+  }
+}
+
+/* ======================================
+   SERVICES — ≤ 320px SE / TINY
+====================================== */
+@media (max-width: 320px) {
+  .landing-page .services-container {
+    padding-top: 28px;
+    padding-bottom: 40px;
+  }
+  .landing-page .our-services h1 {
+    font-size: clamp(1.15rem, 6.5vw, 1.4rem);
+    margin-bottom: 0.875rem;
+  }
+  .landing-page .services-list {
+    padding: 0 8px;
+    gap: 0.75rem;
+  }
+  .landing-page .card-front {
+    padding: 12px 10px;
+    border-radius: 10px;
+  }
+  .landing-page .service-card h3 {
+    font-size: clamp(0.85rem, 5vw, 0.95rem);
+  }
+  .landing-page .card-content-right {
+    font-size: 0.72rem;
+  }
+  .landing-page .skill {
+    font-size: 0.56rem;
+    padding: 3px 6px;
+  }
 }
 
 /* ================= STICKY GRID SECTION ================= */
 
 .landing-page .sticky-root {
-  margin-top: 150px;
   position: relative;
   isolation: isolate;
   transform: none !important;
@@ -986,14 +2008,14 @@
   grid-template-rows: repeat(3, 1fr);
   gap: 24px;
   padding: 24px;
-  background: #5a5a5a;
+  background: #000000;
 }
 
 /* GRID CELL */
 .landing-page .landing-cell {
   height: 100%;
   border: 1px solid var(--lp-border-light);
-  background: #fff;
+  background: #999999;
   border-radius: 20px;
   opacity: 0;
   overflow: hidden;
@@ -1012,14 +2034,14 @@
 .landing-page .cell-card.premium {
   height: 100%;
   width: 100%;
-  padding: 22px 20px;
+  padding: 0;
   border-radius: 20px;
+  overflow: hidden;
   border: 1px solid rgba(212, 166, 63, 0.18);
-  background: #fff;
+  background: #999999;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -1028,70 +2050,21 @@
     box-shadow 0.45s ease;
 }
 
+.landing-page .cell-bg-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+  animation: lp-float 3s ease-in-out infinite;
+}
+
 /* HOVER (NO LAYOUT SHIFT) */
 .landing-page .landing-cell:hover .cell-card {
   transform: translateY(-6px);
   box-shadow:
     0 30px 60px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-
-/* HEADING */
-.landing-page .cell-heading {
-  font-size: 20px;
-  font-weight: 900;
-  color: #3a2a1a;
-  text-align: center;
-  line-height: 1.2;
-  animation: lp-float 3s ease-in-out infinite;
-}
-
-/* NUMBER */
-.landing-page .cell-number {
-  font-size: 38px;
-  font-weight: 800;
-  color: #d4a63f;
-  line-height: 1;
-  animation: lp-float 3s ease-in-out infinite;
-}
-
-/* IMAGE */
-.landing-page .cell-image-wrap {
-  width: 110px;
-  height: 90px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: lp-float 3s ease-in-out infinite;
-}
-
-.landing-page .cell-image-wrap img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.12));
-}
-
-/* FINAL TEXT */
-.landing-page .cell-text {
-  font-size: 15px;
-  color: #6b4b2a;
-  opacity: 0.9;
-  text-align: center;
-  line-height: 1.3;
-  margin-top: auto;
-  animation: lp-float 3s ease-in-out infinite;
-}
-
-/* FLOAT ANIMATION */
-@keyframes lp-float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
 }
 
 /* =========================
@@ -1117,54 +2090,150 @@
   letter-spacing: -0.03em;
 }
 
-@media (max-width: 1024px) {
-  .landing-page .cell-card.premium {
-    padding: 20px 18px;
-    gap: 10px;
+/* FLOAT ANIMATION */
+@keyframes lp-float {
+  0%,
+  100% {
+    transform: translateX(6px);
   }
-  
-  .landing-page .cell-heading {
-    font-size: 18px;
-    line-height: 1.25;
-  }
-  
-  .landing-page .cell-number {
-    font-size: 34px;
-  }
-  
-  .landing-page .cell-image-wrap {
-    width: 100px;
-    height: 80px;
-  }
-  
-  .landing-page .cell-text {
-    font-size: 14px;
+  50% {
+    transform: translateX(-6px);
   }
 }
 
-@media (max-width: 600px) {
+/* ======================================
+   STICKY GRID — ≤ 1024px TABLET
+====================================== */
+@media (max-width: 1024px) {
+  .landing-page .landing-section {
+    height: 350vh;
+  }
+  .landing-page .landing-grid {
+    gap: 16px;
+    padding: 16px;
+  }
+  .landing-page .landing-cell {
+    border-radius: 16px;
+  }
   .landing-page .cell-card.premium {
-    padding: 18px 16px;
+    border-radius: 16px;
+  }
+  .landing-page .main-card {
+    border-radius: 32px;
+  }
+  .landing-page .main-card h1 {
+    font-size: clamp(42px, 6vw, 64px);
+  }
+}
+
+/* ======================================
+   STICKY GRID — ≤ 768px PHONE
+====================================== */
+@media (max-width: 768px) {
+  .landing-page .landing-section {
+    height: 300vh;
+  }
+  .landing-page .landing-grid {
+    gap: 12px;
+    padding: 12px;
+  }
+  .landing-page .landing-cell {
+    border-radius: 14px;
+  }
+  .landing-page .cell-card.premium {
+    border-radius: 14px;
+  }
+  .landing-page .main-card {
+    border-radius: 24px;
+  }
+  .landing-page .main-card h1 {
+    font-size: clamp(32px, 7vw, 48px);
+    letter-spacing: -0.02em;
+  }
+  /* Reduce float animation range on mobile */
+  @keyframes lp-float {
+    0%, 100% { transform: translateX(3px); }
+    50%      { transform: translateX(-3px); }
+  }
+  /* Disable hover lift on touch */
+  .landing-page .landing-cell:hover .cell-card {
+    transform: none;
+  }
+}
+
+/* ======================================
+   STICKY GRID — ≤ 425px LARGE PHONE
+====================================== */
+@media (max-width: 425px) {
+  .landing-page .landing-section {
+    height: 280vh;
+  }
+  .landing-page .landing-grid {
+    gap: 10px;
+    padding: 10px;
+  }
+  .landing-page .landing-cell {
+    border-radius: 12px;
+  }
+  .landing-page .cell-card.premium {
+    border-radius: 12px;
+  }
+  .landing-page .main-card {
+    border-radius: 20px;
+  }
+  .landing-page .main-card h1 {
+    font-size: clamp(28px, 7.5vw, 38px);
+  }
+}
+
+/* ======================================
+   STICKY GRID — ≤ 375px SMALL PHONE
+====================================== */
+@media (max-width: 375px) {
+  .landing-page .landing-section {
+    height: 260vh;
+  }
+  .landing-page .landing-grid {
     gap: 8px;
+    padding: 8px;
   }
-
-  .landing-page .cell-heading {
-    font-size: 16px;
-    line-height: 1.3;
+  .landing-page .landing-cell {
+    border-radius: 10px;
   }
-
-  .landing-page .cell-number {
-    font-size: 30px;
+  .landing-page .cell-card.premium {
+    border-radius: 10px;
   }
-
-  .landing-page .cell-image-wrap {
-    width: 88px;
-    height: 68px;
+  .landing-page .main-card {
+    border-radius: 18px;
   }
+  .landing-page .main-card h1 {
+    font-size: clamp(24px, 7vw, 34px);
+    letter-spacing: -0.015em;
+  }
+}
 
-  .landing-page .cell-text {
-    font-size: 13px;
-    line-height: 1.35;
+/* ======================================
+   STICKY GRID — ≤ 320px SE / TINY
+====================================== */
+@media (max-width: 320px) {
+  .landing-page .landing-section {
+    height: 240vh;
+  }
+  .landing-page .landing-grid {
+    gap: 6px;
+    padding: 6px;
+  }
+  .landing-page .landing-cell {
+    border-radius: 8px;
+  }
+  .landing-page .cell-card.premium {
+    border-radius: 8px;
+  }
+  .landing-page .main-card {
+    border-radius: 14px;
+  }
+  .landing-page .main-card h1 {
+    font-size: clamp(20px, 7vw, 28px);
   }
 }
 
@@ -1173,6 +2242,7 @@
 .landing-page .typography-section {
   height: 55vh;
   background: #ffffff;
+  color: #0b0b45;
   display: flex;
   align-items: center;
   padding-left: 8vw;
@@ -1185,9 +2255,15 @@
 }
 
 @keyframes lp-floatY {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
 .landing-page .every,
@@ -1270,7 +2346,8 @@
 }
 
 @keyframes lp-floatUp {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -1279,7 +2356,8 @@
 }
 
 @keyframes lp-floatDown {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -1298,7 +2376,7 @@
 }
 
 .landing-page .testimonial-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -1400,7 +2478,7 @@
     flex: 0 0 calc(50% - 12px);
   }
 
-  .landing-page .testimonial-column:nth-child(n+3) {
+  .landing-page .testimonial-column:nth-child(n + 3) {
     display: none;
   }
 }
@@ -1441,6 +2519,14 @@
   width: 100%;
   display: flex;
   flex-direction: column;
+  /*
+   * poster-footer::before extends 80px above the footer (top:-80px)
+   * with background:#d0d1cc — same as contact-hero.
+   * Without z-index, the footer's stacking context paints OVER the
+   * contact-hero image, making it invisible.
+   */
+  position: relative;
+  z-index: 3;
 }
 
 .landing-page .wrapper a {
@@ -1482,7 +2568,7 @@
   max-width: 600px;
   color: #222;
   text-transform: uppercase;
-  font-family: 'Oswald', sans-serif;
+  font-family: "Oswald", sans-serif;
 }
 
 .landing-page .headline-main {
@@ -1495,7 +2581,7 @@
 
 .landing-page .headline-sub {
   display: block;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 400;
   font-size: 1rem;
   line-height: 1.6;
@@ -1550,8 +2636,14 @@
 
 /* CTA ICON */
 @keyframes lp-ctaNudge {
-  0%, 85%, 100% { transform: translateX(0); }
-  90% { transform: translateX(6px); }
+  0%,
+  85%,
+  100% {
+    transform: translateX(0);
+  }
+  90% {
+    transform: translateX(6px);
+  }
 }
 
 .landing-page .cta-icon {
@@ -1589,39 +2681,224 @@
   z-index: 5;
 }
 
-/* =========================
-   RESPONSIVE CONTACT HERO
-========================= */
+/* ==============================================
+   TYPOGRAPHY SECTION — RESPONSIVE
+============================================== */
 
+/* Tablet: height:55vh clips large text; overflow:hidden silently cuts it */
+@media (max-width: 1024px) {
+  .landing-page .typography-section {
+    height: auto;
+    min-height: 38vh;
+    padding: 60px 6vw;
+    overflow: visible;          /* stop clipping text on resize */
+  }
+  .landing-page .text-wrap {
+    row-gap: 1rem;
+  }
+  /* Reduce clamp minimum — 9vw at 1024px = 92px (fine); at 768px = 69px (too big) */
+  .landing-page .every,
+  .landing-page .piece-counts {
+    font-size: clamp(40px, 9vw, 112px);
+  }
+  .landing-page .little {
+    font-size: clamp(36px, 8vw, 102px);
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-page .typography-section {
+    min-height: auto;
+    padding: 44px 5vw;
+    overflow: visible;
+  }
+  .landing-page .text-wrap {
+    row-gap: 0.8rem;
+  }
+  /*
+   * At 768px: 9vw = 69px — still fine.
+   * At 425px: 9vw = 38px — but min was 60px! That's why text stayed huge.
+   * Drop minimum to 38px so clamp actually scales down.
+   */
+  .landing-page .every,
+  .landing-page .piece-counts {
+    font-size: clamp(38px, 9vw, 80px);
+  }
+  .landing-page .little {
+    font-size: clamp(34px, 8vw, 72px);
+  }
+}
+
+@media (max-width: 425px) {
+  .landing-page .typography-section {
+    padding: 36px 4vw;
+  }
+  .landing-page .text-wrap {
+    row-gap: 0.65rem;
+  }
+  /* 9vw at 425px = 38px — clamp below honours that */
+  .landing-page .every,
+  .landing-page .piece-counts {
+    font-size: clamp(30px, 9vw, 52px);
+  }
+  .landing-page .little {
+    font-size: clamp(26px, 8vw, 46px);
+  }
+}
+
+@media (max-width: 375px) {
+  .landing-page .typography-section {
+    padding: 28px 4vw;
+  }
+  .landing-page .text-wrap {
+    row-gap: 0.55rem;
+  }
+  /* 9vw at 375px = 33.75px */
+  .landing-page .every,
+  .landing-page .piece-counts {
+    font-size: clamp(26px, 9vw, 44px);
+  }
+  .landing-page .little {
+    font-size: clamp(22px, 8vw, 38px);
+  }
+}
+
+@media (max-width: 320px) {
+  .landing-page .typography-section {
+    padding: 22px 3.5vw;
+  }
+  /* 9vw at 320px = 28.8px */
+  .landing-page .every,
+  .landing-page .piece-counts {
+    font-size: clamp(22px, 9vw, 36px);
+  }
+  .landing-page .little {
+    font-size: clamp(18px, 8vw, 32px);
+  }
+}
+
+
+/* ==============================================
+   CONTACT HERO — RESPONSIVE
+============================================== */
+
+/* 900px: stacks left/right columns */
 @media (max-width: 900px) {
   .landing-page .contact-hero {
     flex-direction: column;
     min-height: auto;
+    /*
+     * Desktop has overflow:hidden to clip the translateX(40px) image.
+     * When stacked, the image moves below text — overflow:hidden clips it
+     * because the container height is driven only by the text content.
+     */
+    overflow: visible;
+    /* Sit above footer ::before which overlaps with same bg color */
+    position: relative;
+    z-index: 2;
   }
-
   .landing-page .hero-left,
   .landing-page .hero-right {
     width: 100%;
   }
-
   .landing-page .hero-left {
     padding: 2rem;
   }
-
   .landing-page .headline-main {
     font-size: 2.5rem;
   }
-
   .landing-page .hero-right {
-    margin-top: 2rem;
+    margin-top: 0;
   }
-
   .landing-page .hero-image {
     height: 300px;
+    width: 100%;
     margin-right: 0;
     transform: none;
+    object-fit: cover;
+    /*
+     * wolf.jpg is 1080×1920 (portrait) — wolf is centered vertically.
+     * object-position:center top crops the top 15% = just gray bg.
+     * center center shows the wolf's face.
+     */
+    object-position: center center;
   }
 }
+
+/* 768px: headline still too big, image needs to fill full-width */
+@media (max-width: 768px) {
+  .landing-page .hero-left {
+    padding: 1.75rem 1.5rem;
+  }
+  .landing-page .headline-main {
+    font-size: clamp(1.8rem, 7vw, 2.4rem);
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+  .landing-page .headline-sub {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  .landing-page .hero-right {
+    margin-top: 0;
+  }
+  .landing-page .hero-image {
+    height: 250px;
+    width: 100%;
+    object-fit: cover;
+    object-position: center center;
+  }
+  .landing-page .cta-link {
+    font-size: 1rem;
+  }
+  .landing-page .cta-group {
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+}
+
+@media (max-width: 425px) {
+  .landing-page .hero-left {
+    padding: 1.5rem;
+  }
+  .landing-page .headline-main {
+    font-size: clamp(1.55rem, 7.5vw, 2rem);
+  }
+  .landing-page .hero-image {
+    height: 210px;
+  }
+}
+
+@media (max-width: 375px) {
+  .landing-page .hero-left {
+    padding: 1.25rem;
+  }
+  .landing-page .headline-main {
+    font-size: clamp(1.35rem, 7vw, 1.75rem);
+  }
+  .landing-page .headline-sub {
+    font-size: 0.84rem;
+  }
+  .landing-page .hero-image {
+    height: 180px;
+  }
+}
+
+@media (max-width: 320px) {
+  .landing-page .hero-left {
+    padding: 1rem;
+  }
+  .landing-page .headline-main {
+    font-size: clamp(1.2rem, 7vw, 1.5rem);
+  }
+  .landing-page .hero-image {
+    height: 155px;
+  }
+  .landing-page .cta-link {
+    font-size: 0.9rem;
+  }
+}
+
 
 /* ================= FOOTER (POSTER FOOTER) ================= */
 
@@ -1630,18 +2907,22 @@
   min-height: 100vh;
   padding: 140px 60px 60px;
   background:
-    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.05), transparent 40%),
+    radial-gradient(
+      circle at 20% 20%,
+      rgba(255, 255, 255, 0.05),
+      transparent 40%
+    ),
     repeating-linear-gradient(
       0deg,
-      rgba(255,255,255,0.05) 0px,
-      rgba(255,255,255,0.05) 1px,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 1px,
       transparent 1px,
       transparent 80px
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(255,255,255,0.05) 0px,
-      rgba(255,255,255,0.05) 1px,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 1px,
       transparent 1px,
       transparent 80px
     ),
@@ -1815,7 +3096,7 @@
 }
 
 .landing-page .newsletter-input input::placeholder {
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .landing-page .newsletter-input button {
@@ -1839,16 +3120,13 @@
   letter-spacing: -0.07em;
   line-height: 0.8;
   color: #f2f2f2;
-  transform:
-    perspective(600px)
-    rotateX(26deg)
-    scaleY(1.4);
+  transform: perspective(600px) rotateX(26deg) scaleY(1.4);
   text-shadow:
-    0 2px 0 rgba(0,0,0,0.15),
-    0 6px 0 rgba(0,0,0,0.18),
-    0 10px 0 rgba(0,0,0,0.22),
-    0 16px 0 rgba(0,0,0,0.35),
-    0 36px 70px rgba(0,0,0,0.75);
+    0 2px 0 rgba(0, 0, 0, 0.15),
+    0 6px 0 rgba(0, 0, 0, 0.18),
+    0 10px 0 rgba(0, 0, 0, 0.22),
+    0 16px 0 rgba(0, 0, 0, 0.35),
+    0 36px 70px rgba(0, 0, 0, 0.75);
 }
 
 /* ---------- BOTTOM META ---------- */
@@ -1863,7 +3141,7 @@
 
 .landing-page .footer-links {
   margin-right: 120px;
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .landing-page .footer-social {
@@ -1879,45 +3157,299 @@
     text-align: center;
     z-index: 1;
   }
-  
+
   .landing-page .footer-title.theunoia-3d {
     font-size: 18vw;
-    transform:
-      perspective(700px)
-      rotateX(20deg)
-      scaleY(1.25);
+    transform: perspective(700px) rotateX(20deg) scaleY(1.25);
   }
 }
 
 @media (max-width: 900px) {
+  /* footer-top already goes grid-template-columns: 1fr (single col) */
+  /* Override to 2-column — 4→1 is too sparse, 4→2→1 is cleaner */
   .landing-page .footer-top {
-    grid-template-columns: 1fr;
-    margin-top: 80px;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 60px;
+    gap: 28px;
   }
-
-  .landing-page .footer-bottom {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
+  .landing-page .poster-footer {
+    padding: 100px 40px 40px;
+  }
+  /* footer-links: strip the large margin-right that pushes it off-center */
+  .landing-page .footer-links {
+    margin-right: 0;
+    font-size: 14px;
+  }
+  .landing-page .footer-social {
+    margin-right: 0;
   }
 }
 
 @media (max-width: 600px) {
-  .landing-page .footer-title {
-    margin-top: 60px;
-    margin-bottom: 28px;
+  /* collapse footer-top to single column on phones */
+  .landing-page .footer-top {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
-  
-  .landing-page .footer-title.theunoia-3d {
-    font-size: 16vw;
-    line-height: 0.9;
-    transform:
-      perspective(900px)
-      rotateX(12deg)
-      scaleY(1.1);
-    text-shadow:
-      0 2px 0 rgba(0,0,0,0.2),
-      0 10px 30px rgba(0,0,0,0.6);
+  .landing-page .poster-footer {
+    padding: 70px 18px 28px;
+  }
+}
+
+@media (max-width: 425px) {
+  .landing-page .poster-footer {
+    padding: 60px 14px 24px;
+  }
+  .landing-page .footer-top {
+    margin-top: 36px;
+    gap: 14px;
+  }
+  .landing-page .footer-socials li {
+    justify-content: center;
+    font-size: 12px;
+  }
+  .landing-page .footer-top h4 {
+    font-size: 12px;
+  }
+  .landing-page .footer-top ul {
+    font-size: 12px;
+    line-height: 1.85;
+  }
+  .landing-page .newsletter-input {
+    padding: 4px;
+  }
+  .landing-page .newsletter-input input {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 375px) {
+  .landing-page .poster-footer {
+    padding: 56px 12px 20px;
+  }
+  .landing-page .footer-bottom {
+    font-size: 9px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 320px) {
+  .landing-page .poster-footer {
+    padding: 48px 10px 16px;
+  }
+}
+
+/* ==============================================
+   TYPOGRAPHY SECTION — RESPONSIVE
+============================================== */
+@media (max-width: 1024px) {
+  .landing-page .typography-section {
+    height: auto;
+    padding: 60px 6vw;
+  }
+  .landing-page .text-wrap {
+    row-gap: 1.4vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-page .typography-section {
+    padding: 48px 5vw;
+  }
+  .landing-page .text-wrap {
+    row-gap: 0.8rem;
+  }
+}
+
+@media (max-width: 425px) {
+  .landing-page .typography-section {
+    padding: 36px 4vw;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 375px) {
+  .landing-page .typography-section {
+    padding: 28px 4vw;
+  }
+}
+
+/* ==============================================
+   TESTIMONIALS — RESPONSIVE (EXTENDED)
+============================================== */
+
+/* At 1200px the existing block hides col 3+4 — only need extras below */
+
+@media (max-width: 768px) {
+  .landing-page .testimonials-section {
+    padding: 52px 16px;
+  }
+  .landing-page .section-header {
+    margin-bottom: 48px;
+  }
+  .landing-page .section-header h2 {
+    font-size: clamp(28px, 8vw, 40px);
+    line-height: 1.25;
+  }
+  /* Animate-up/down is nice on desktop but can trigger jank on mobile scroll */
+  .landing-page .testimonial-column {
+    animation: none !important;
+    flex: 0 0 100%;
+  }
+  .landing-page .testimonials-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  /* Show only first card of each rendered column to keep it compact */
+  .landing-page .testimonial-column .testimonial-card:nth-child(n + 2) {
+    display: none;
+  }
+  .landing-page .testimonial-card {
+    padding: 20px;
+    border-radius: 14px;
+  }
+  .landing-page .card-author {
+    font-size: 15px;
+  }
+  .landing-page .card-text {
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+}
+
+@media (max-width: 425px) {
+  .landing-page .testimonials-section {
+    padding: 40px 12px;
+  }
+  .landing-page .section-header h2 {
+    font-size: clamp(24px, 8vw, 34px);
+  }
+  .landing-page .testimonial-card {
+    padding: 16px;
+  }
+  .landing-page .card-avatar {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 375px) {
+  .landing-page .testimonials-section {
+    padding: 32px 10px;
+  }
+  .landing-page .section-header h2 {
+    font-size: clamp(22px, 7.5vw, 30px);
+  }
+  .landing-page .card-text {
+    font-size: 13px;
+  }
+}
+
+
+/* ==============================================
+   FOOTER (POSTER FOOTER) — RESPONSIVE EXTENDED
+============================================== */
+
+/* ≤ 1024px already handled — extend below */
+
+@media (max-width: 900px) {
+  /* footer-top already goes grid-template-columns: 1fr (single col) */
+  /* Override to 2-column — 4→1 is too sparse, 4→2→1 is cleaner */
+  .landing-page .footer-top {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 60px;
+    gap: 28px;
+  }
+  .landing-page .poster-footer {
+    padding: 100px 40px 40px;
+  }
+  /* footer-links: strip the large margin-right that pushes it off-center */
+  .landing-page .footer-links {
+    margin-right: 0;
+    font-size: 14px;
+  }
+  .landing-page .footer-social {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-page .poster-footer {
+    padding: 80px 24px 32px;
+  }
+  .landing-page .footer-top {
+    grid-template-columns: 1fr 1fr;
+    margin-top: 48px;
+    gap: 20px;
+  }
+  .landing-page .footer-bottom {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+    font-size: 10px;
+  }
+  .landing-page .footer-links {
+    margin-right: 0;
+    font-size: 12px;
+  }
+  .landing-page .footer-social {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  /* collapse footer-top to single column on phones */
+  .landing-page .footer-top {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .landing-page .poster-footer {
+    padding: 70px 18px 28px;
+  }
+}
+
+@media (max-width: 425px) {
+  .landing-page .poster-footer {
+    padding: 60px 14px 24px;
+  }
+  .landing-page .footer-top {
+    margin-top: 36px;
+    gap: 14px;
+  }
+  .landing-page .footer-socials li {
+    justify-content: center;
+    font-size: 12px;
+  }
+  .landing-page .footer-top h4 {
+    font-size: 12px;
+  }
+  .landing-page .footer-top ul {
+    font-size: 12px;
+    line-height: 1.85;
+  }
+  .landing-page .newsletter-input {
+    padding: 4px;
+  }
+  .landing-page .newsletter-input input {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 375px) {
+  .landing-page .poster-footer {
+    padding: 56px 12px 20px;
+  }
+  .landing-page .footer-bottom {
+    font-size: 9px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 320px) {
+  .landing-page .poster-footer {
+    padding: 48px 10px 16px;
   }
 }
 
@@ -1928,10 +3460,30 @@
   padding: 70px 24px 160px;
   overflow: hidden;
   background:
-    radial-gradient(1200px 600px at 85% -10%, rgba(251,189,132,0.18), transparent 60%),
-    radial-gradient(900px 500px at -10% 20%, rgba(112,78,134,0.18), transparent 60%),
-    repeating-linear-gradient(0deg, rgba(15,23,42,0.035) 0px, rgba(15,23,42,0.035) 1px, transparent 1px, transparent 96px),
-    repeating-linear-gradient(90deg, rgba(15,23,42,0.035) 0px, rgba(15,23,42,0.035) 1px, transparent 1px, transparent 96px),
+    radial-gradient(
+      1200px 600px at 85% -10%,
+      rgba(251, 189, 132, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at -10% 20%,
+      rgba(112, 78, 134, 0.18),
+      transparent 60%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(15, 23, 42, 0.035) 0px,
+      rgba(15, 23, 42, 0.035) 1px,
+      transparent 1px,
+      transparent 96px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(15, 23, 42, 0.035) 0px,
+      rgba(15, 23, 42, 0.035) 1px,
+      transparent 1px,
+      transparent 96px
+    ),
     linear-gradient(180deg, #ffffff 0%, #fbfafc 100%);
 }
 
@@ -1946,8 +3498,12 @@
 }
 
 @keyframes lp-grainDrift {
-  0% { transform: translate(0,0); }
-  100% { transform: translate(-10%, -10%); }
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(-10%, -10%);
+  }
 }
 
 /* Sun rays with glow pulse */
@@ -1959,7 +3515,13 @@
   height: 800px;
   pointer-events: none;
   filter: blur(80px);
-  background: radial-gradient(circle, rgba(112,78,134,0.35) 0%, rgba(251,189,132,0.25) 35%, rgba(203,236,147,0.15) 55%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(112, 78, 134, 0.35) 0%,
+    rgba(251, 189, 132, 0.25) 35%,
+    rgba(203, 236, 147, 0.15) 55%,
+    transparent 70%
+  );
   animation: lp-rayPulse 4.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
@@ -2013,11 +3575,19 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--lp-primary);
-  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.75));
-  border: 1px solid rgba(112,78,134,0.28);
-  box-shadow: 0 10px 30px rgba(112,78,134,0.25), inset 0 1px 0 rgba(255,255,255,0.8);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.75)
+  );
+  border: 1px solid rgba(112, 78, 134, 0.28);
+  box-shadow:
+    0 10px 30px rgba(112, 78, 134, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(10px);
-  transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease;
   animation: lp-chipGlow 6s ease-in-out infinite;
 }
 
@@ -2039,18 +3609,34 @@
   inset: -10px;
   z-index: -1;
   border-radius: 20px;
-  background: radial-gradient(circle at top left, rgba(112,78,134,0.4), rgba(251,189,132,0.25), transparent 65%);
+  background: radial-gradient(
+    circle at top left,
+    rgba(112, 78, 134, 0.4),
+    rgba(251, 189, 132, 0.25),
+    transparent 65%
+  );
   opacity: 0.7;
 }
 
 .landing-page .blog-chip:hover {
   transform: translateY(-4px);
-  box-shadow: 0 18px 36px rgba(112,78,134,0.35), inset 0 1px 0 rgba(255,255,255,0.75);
+  box-shadow:
+    0 18px 36px rgba(112, 78, 134, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 
 @keyframes lp-chipGlow {
-  0%, 100% { box-shadow: 0 10px 30px rgba(112,78,134,0.22), inset 0 1px 0 rgba(255,255,255,0.8); }
-  50% { box-shadow: 0 14px 40px rgba(112,78,134,0.38), inset 0 1px 0 rgba(255,255,255,0.8); }
+  0%,
+  100% {
+    box-shadow:
+      0 10px 30px rgba(112, 78, 134, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    box-shadow:
+      0 14px 40px rgba(112, 78, 134, 0.38),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
 }
 
 /* Typography */
@@ -2069,15 +3655,19 @@
 }
 
 @keyframes lp-titleSheen {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
 }
 
 .landing-page .blog-subtitle {
   max-width: 640px;
   margin: auto;
   font-size: 16px;
-  color: rgba(15,23,42,0.7);
+  color: rgba(15, 23, 42, 0.7);
 }
 
 /* Search */
@@ -2121,7 +3711,10 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background .25s ease, color .25s ease, border-color .25s ease;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
 }
 
 .landing-page .blog-filters button.active,
@@ -2143,12 +3736,14 @@
   overflow: hidden;
   border-radius: 22px;
   background: linear-gradient(180deg, #ffffff, #fbfafc);
-  border: 1px solid rgba(15,23,42,0.08);
-  box-shadow: 0 20px 40px rgba(15,23,42,0.08);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
   text-align: left;
   opacity: 0;
   transform: translateY(24px);
-  transition: transform .35s ease, box-shadow .35s ease;
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
   animation:
     lp-cardReveal 0.9s ease forwards,
     lp-floatCard 14s ease-in-out infinite var(--float-delay, 1.2s);
@@ -2159,9 +3754,13 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(120deg, transparent 60%, rgba(251,189,132,0.12));
+  background: linear-gradient(
+    120deg,
+    transparent 60%,
+    rgba(251, 189, 132, 0.12)
+  );
   opacity: 0;
-  transition: opacity .4s ease;
+  transition: opacity 0.4s ease;
 }
 
 .landing-page .blog-card img {
@@ -2196,7 +3795,7 @@
 
 .landing-page .blog-card:hover {
   transform: translateY(-12px);
-  box-shadow: 0 40px 80px rgba(15,23,42,0.15);
+  box-shadow: 0 40px 80px rgba(15, 23, 42, 0.15);
 }
 
 .landing-page .blog-card:hover::before {
@@ -2205,17 +3804,37 @@
 
 /* Card animations */
 @keyframes lp-cardReveal {
-  to { opacity: 1; transform: translateY(0); }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes lp-floatCard {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
-.landing-page .blog-card:nth-child(1) { --reveal-delay: .2s; --float-delay: 1.2s; animation-delay: var(--reveal-delay); }
-.landing-page .blog-card:nth-child(2) { --reveal-delay: .4s; --float-delay: 1.4s; animation-delay: var(--reveal-delay); }
-.landing-page .blog-card:nth-child(3) { --reveal-delay: .6s; --float-delay: 1.6s; animation-delay: var(--reveal-delay); }
+.landing-page .blog-card:nth-child(1) {
+  --reveal-delay: 0.2s;
+  --float-delay: 1.2s;
+  animation-delay: var(--reveal-delay);
+}
+.landing-page .blog-card:nth-child(2) {
+  --reveal-delay: 0.4s;
+  --float-delay: 1.4s;
+  animation-delay: var(--reveal-delay);
+}
+.landing-page .blog-card:nth-child(3) {
+  --reveal-delay: 0.6s;
+  --float-delay: 1.6s;
+  animation-delay: var(--reveal-delay);
+}
 
 /* Responsive */
 @media (max-width: 900px) {
@@ -2244,7 +3863,7 @@
     135deg,
     var(--lp-accent) 0%,
     var(--lp-secondary) 55%,
-    rgba(255,255,255,0) 100%
+    rgba(255, 255, 255, 0) 100%
   );
   clip-path: polygon(
     78% 0%,
@@ -2257,9 +3876,8 @@
   );
   opacity: 0.95;
   z-index: 1;
-  filter:
-    drop-shadow(0 40px 80px rgba(15,23,42,0.22))
-    drop-shadow(0 12px 30px rgba(112,78,134,0.25));
+  filter: drop-shadow(0 40px 80px rgba(15, 23, 42, 0.22))
+    drop-shadow(0 12px 30px rgba(112, 78, 134, 0.25));
 }
 
 .landing-page .faq-accent-right {
@@ -2327,11 +3945,7 @@
   bottom: -6px;
   width: 60%;
   height: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--lp-primary),
-    var(--lp-secondary)
-  );
+  background: linear-gradient(90deg, var(--lp-primary), var(--lp-secondary));
   border-radius: 999px;
 }
 
@@ -2351,7 +3965,9 @@
   border-radius: 16px;
   padding: 22px 26px;
   text-align: left;
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
 .landing-page .faq-item:hover {
@@ -2414,30 +4030,190 @@
   z-index: 2;
 }
 
-/* ================= RESPONSIVE FAQ ================= */
+/* ==============================================
+   FAQ — RESPONSIVE ≤ 1024px TABLET
+============================================== */
+@media (max-width: 1024px) {
+  .landing-page .faq-hero {
+    padding: 120px 24px 140px;
+  }
+  .landing-page .faq-accent {
+    width: 800px;
+    height: 520px;
+    top: -180px;
+    opacity: 0.85;
+  }
+  .landing-page .faq-accent-left {
+    left: -280px;
+  }
+  .landing-page .faq-accent-right {
+    right: -280px;
+  }
+  .landing-page .faq-subtitle {
+    margin-bottom: 56px;
+  }
+}
 
+/* ==============================================
+   FAQ — RESPONSIVE ≤ 768px PHONE
+============================================== */
 @media (max-width: 768px) {
   .landing-page .faq-hero {
-    padding: 100px 20px 120px;
+    padding: 100px 18px 110px;
   }
-
   .landing-page .faq-title {
-    font-size: 36px;
+    font-size: clamp(28px, 7vw, 40px);
   }
-
+  .landing-page .faq-subtitle {
+    font-size: 15px;
+    margin-bottom: 44px;
+  }
   .landing-page .faq-accent {
-    width: 640px;
-    height: 420px;
-    top: -140px;
-    opacity: 0.75;
+    width: 560px;
+    height: 360px;
+    top: -120px;
+    opacity: 0.65;
   }
-
   .landing-page .faq-accent-left {
-    left: -240px;
+    left: -200px;
   }
-
   .landing-page .faq-accent-right {
-    right: -240px;
+    right: -200px;
+  }
+  .landing-page .faq-group {
+    margin-bottom: 40px;
+  }
+  .landing-page .faq-item {
+    padding: 18px 20px;
+    border-radius: 14px;
+  }
+  .landing-page .faq-item summary {
+    font-size: 15px;
+  }
+  .landing-page .faq-item summary::after {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+  }
+  .landing-page .faq-item p {
+    font-size: 14px;
+    line-height: 1.65;
+    margin-top: 12px;
+  }
+  .landing-page .faq-list {
+    gap: 14px;
+  }
+  /* Disable hover lift on touch */
+  .landing-page .faq-item:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* ==============================================
+   FAQ — RESPONSIVE ≤ 425px LARGE PHONE
+============================================== */
+@media (max-width: 425px) {
+  .landing-page .faq-hero {
+    padding: 88px 14px 90px;
+  }
+  .landing-page .faq-title {
+    font-size: clamp(24px, 7.5vw, 34px);
+  }
+  .landing-page .faq-subtitle {
+    font-size: 14px;
+    margin-bottom: 36px;
+  }
+  /* Hide accents entirely — they overflow and add no value at this size */
+  .landing-page .faq-accent {
+    display: none;
+  }
+  .landing-page .faq-group {
+    margin-bottom: 32px;
+  }
+  .landing-page .faq-group-title {
+    font-size: 12px;
+    margin-bottom: 16px;
+  }
+  .landing-page .faq-item {
+    padding: 16px 16px;
+    border-radius: 12px;
+  }
+  .landing-page .faq-item summary {
+    font-size: 14px;
+  }
+  .landing-page .faq-item summary::after {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+  }
+  .landing-page .faq-item p {
+    font-size: 13.5px;
+  }
+  .landing-page .faq-list {
+    gap: 12px;
+  }
+}
+
+/* ==============================================
+   FAQ — RESPONSIVE ≤ 375px SMALL PHONE
+============================================== */
+@media (max-width: 375px) {
+  .landing-page .faq-hero {
+    padding: 80px 12px 80px;
+  }
+  .landing-page .faq-title {
+    font-size: clamp(22px, 7vw, 30px);
+  }
+  .landing-page .faq-subtitle {
+    font-size: 13px;
+    margin-bottom: 30px;
+  }
+  .landing-page .faq-group {
+    margin-bottom: 28px;
+  }
+  .landing-page .faq-item {
+    padding: 14px 14px;
+    border-radius: 10px;
+  }
+  .landing-page .faq-item summary {
+    font-size: 13.5px;
+  }
+  .landing-page .faq-item summary::after {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+  }
+  .landing-page .faq-item p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .landing-page .faq-list {
+    gap: 10px;
+  }
+}
+
+/* ==============================================
+   FAQ — RESPONSIVE ≤ 320px TINY
+============================================== */
+@media (max-width: 320px) {
+  .landing-page .faq-hero {
+    padding: 72px 10px 68px;
+  }
+  .landing-page .faq-title {
+    font-size: clamp(20px, 7vw, 26px);
+  }
+  .landing-page .faq-subtitle {
+    font-size: 12px;
+  }
+  .landing-page .faq-item {
+    padding: 12px 12px;
+  }
+  .landing-page .faq-item summary {
+    font-size: 13px;
+  }
+  .landing-page .faq-item p {
+    font-size: 12.5px;
   }
 }
 
@@ -2469,8 +4245,12 @@
   z-index: 2;
 }
 
-.landing-page .mask.top { top: 0; }
-.landing-page .mask.bottom { bottom: 0; }
+.landing-page .mask.top {
+  top: 0;
+}
+.landing-page .mask.bottom {
+  bottom: 0;
+}
 
 /* ================= CONTACT SECTION ================= */
 
@@ -2547,7 +4327,9 @@
   border-radius: 12px;
   border: 1.5px solid #cbc9c9;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .landing-page .field input::placeholder,
@@ -2577,7 +4359,9 @@
   font-weight: 800;
   font-size: 15px;
   cursor: pointer;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .landing-page .submit-btn:hover {
@@ -2596,7 +4380,7 @@
 
 /* Diagonal Split Background */
 .landing-page .get-in-touch-section::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -2608,13 +4392,18 @@
 }
 
 .landing-page .get-in-touch-section::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 50%;
-  background: linear-gradient(15deg, var(--lp-secondary) 0%, #ffd4a3 40%, var(--lp-accent) 100%);
+  background: linear-gradient(
+    15deg,
+    var(--lp-secondary) 0%,
+    #ffd4a3 40%,
+    var(--lp-accent) 100%
+  );
   clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
   z-index: 0;
 }
@@ -2729,7 +4518,7 @@
 
 /* Gradient Overlay on Hover */
 .landing-page .info-card::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   opacity: 0;
@@ -2738,15 +4527,27 @@
 }
 
 .landing-page .info-card:nth-child(1)::before {
-  background: linear-gradient(135deg, rgba(126, 99, 248, 0.05) 0%, rgba(126, 99, 248, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(126, 99, 248, 0.05) 0%,
+    rgba(126, 99, 248, 0.1) 100%
+  );
 }
 
 .landing-page .info-card:nth-child(2)::before {
-  background: linear-gradient(135deg, rgba(251, 189, 132, 0.05) 0%, rgba(251, 189, 132, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(251, 189, 132, 0.05) 0%,
+    rgba(251, 189, 132, 0.1) 100%
+  );
 }
 
 .landing-page .info-card:nth-child(3)::before {
-  background: linear-gradient(135deg, rgba(203, 236, 147, 0.05) 0%, rgba(203, 236, 147, 0.1) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(203, 236, 147, 0.05) 0%,
+    rgba(203, 236, 147, 0.1) 100%
+  );
 }
 
 .landing-page .info-card:hover::before {
@@ -2788,10 +4589,14 @@
 
 /* Shine effect */
 .landing-page .icon-container::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    transparent 50%
+  );
   border-radius: 22px;
   opacity: 0.3;
 }
@@ -2891,7 +4696,8 @@
 }
 
 @keyframes lp-float-circle {
-  0%, 100% {
+  0%,
+  100% {
     transform: translate(0, 0);
   }
   25% {
@@ -2905,50 +4711,292 @@
   }
 }
 
-/* ================= RESPONSIVE CONTACT ================= */
-
+/* ==============================================
+   CONTACT PAGE — RESPONSIVE ≤ 1024px TABLET
+============================================== */
 @media (max-width: 1024px) {
-  .landing-page .info-cards-grid {
-    grid-template-columns: 1fr;
-    gap: 36px;
-  }
-
-  .landing-page .get-in-touch-section {
-    padding: 100px 40px 120px;
-  }
-
-  .landing-page .touch-header h2 {
-    font-size: 42px;
-  }
-
-  .landing-page .landing-navbar {
-    padding: 0 40px;
-  }
-
   .landing-page .contact-section {
     padding: 30px 40px 80px;
   }
+  .landing-page .contact-form {
+    padding: 40px;
+    border-radius: 18px;
+  }
+  .landing-page .form-intro h2 {
+    font-size: clamp(28px, 5vw, 36px);
+  }
+  .landing-page .info-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .landing-page .get-in-touch-section {
+    padding: 80px 40px 100px;
+  }
+  .landing-page .touch-header h2 {
+    font-size: clamp(32px, 5.5vw, 48px);
+  }
+  .landing-page .touch-header p {
+    font-size: 17px;
+  }
+  .landing-page .info-card {
+    padding: 40px 32px;
+    border-radius: 24px;
+  }
+  .landing-page .text-mask h1 {
+    font-size: clamp(48px, 8vw, 72px);
+  }
 }
 
+/* ==============================================
+   CONTACT PAGE — RESPONSIVE ≤ 768px PHONE
+============================================== */
 @media (max-width: 768px) {
-  .landing-page .landing-nav-links {
-    display: none;
+  .landing-page .contact-section {
+    padding: 24px 18px 60px;
   }
-
+  .landing-page .contact-form {
+    padding: 28px 24px;
+    border-radius: 16px;
+    box-shadow:
+      0 30px 60px rgba(15, 23, 42, 0.14),
+      0 15px 30px rgba(15, 23, 42, 0.1);
+  }
   .landing-page .form-grid {
     grid-template-columns: 1fr;
+    gap: 24px;
   }
-
   .landing-page .field.full {
     grid-column: span 1;
   }
-
-  .landing-page .touch-header h2 {
-    font-size: 36px;
+  .landing-page .field label {
+    font-size: 16px;
   }
-
+  .landing-page .field input,
+  .landing-page .field textarea {
+    padding: 14px 16px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+  .landing-page .field textarea {
+    min-height: 130px;
+  }
+  .landing-page .submit-btn {
+    margin-top: 28px;
+    padding: 16px 40px;
+    font-size: 14px;
+    width: 100%;
+  }
+  .landing-page .form-intro h2 {
+    font-size: clamp(24px, 6vw, 32px);
+  }
+  .landing-page .form-intro p {
+    font-size: 14px;
+  }
+  .landing-page .form-grid {
+    gap: 20px;
+  }
+  /* Get in touch */
+  .landing-page .get-in-touch-section {
+    padding: 64px 20px 80px;
+  }
+  .landing-page .touch-header {
+    margin-bottom: 48px;
+  }
+  .landing-page .touch-header h2 {
+    font-size: clamp(26px, 6.5vw, 38px);
+    line-height: 1.25;
+  }
+  .landing-page .touch-header h2 br {
+    display: none;
+  }
+  .landing-page .touch-header p {
+    font-size: 15px;
+  }
+  .landing-page .touch-header .label {
+    font-size: 12px;
+    padding: 8px 20px;
+  }
+  .landing-page .info-card {
+    padding: 32px 24px;
+    border-radius: 20px;
+  }
+  .landing-page .icon-container {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    margin-bottom: 24px;
+  }
+  .landing-page .icon-container svg {
+    width: 34px;
+    height: 34px;
+  }
+  .landing-page .card-title {
+    font-size: 20px;
+  }
+  .landing-page .card-info {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  /* Disable 3D tilt hover on touch */
+  .landing-page .info-card:hover {
+    transform: none;
+    box-shadow:
+      0 30px 60px rgba(0, 0, 0, 0.2),
+      0 12px 24px rgba(0, 0, 0, 0.15);
+  }
   .landing-page .text-mask h1 {
-    font-size: 56px;
+    font-size: clamp(36px, 9vw, 56px);
+  }
+}
+
+/* ==============================================
+   CONTACT PAGE — RESPONSIVE ≤ 425px LARGE PHONE
+============================================== */
+@media (max-width: 425px) {
+  .landing-page .contact-section {
+    padding: 20px 14px 48px;
+  }
+  .landing-page .contact-form {
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+  .landing-page .form-grid {
+    gap: 18px;
+  }
+  .landing-page .field label {
+    font-size: 14px;
+  }
+  .landing-page .field input,
+  .landing-page .field textarea {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+  .landing-page .submit-btn {
+    margin-top: 24px;
+    padding: 14px 32px;
+  }
+  .landing-page .form-intro {
+    margin-bottom: 24px;
+  }
+  .landing-page .get-in-touch-section {
+    padding: 52px 14px 64px;
+  }
+  .landing-page .touch-header {
+    margin-bottom: 36px;
+  }
+  .landing-page .touch-header h2 {
+    font-size: clamp(22px, 7vw, 30px);
+  }
+  .landing-page .touch-header p {
+    font-size: 14px;
+  }
+  .landing-page .info-card {
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+  .landing-page .icon-container {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+  }
+  .landing-page .icon-container svg {
+    width: 28px;
+    height: 28px;
+  }
+  .landing-page .card-title {
+    font-size: 18px;
+  }
+  .landing-page .card-info {
+    font-size: 13px;
+  }
+  /* Deco circles add no value on phones */
+  .landing-page .deco-circle {
+    display: none;
+  }
+  .landing-page .text-mask h1 {
+    font-size: clamp(28px, 9vw, 42px);
+  }
+  .landing-page .contact-reveal {
+    padding: 28px 0;
+  }
+}
+
+/* ==============================================
+   CONTACT PAGE — RESPONSIVE ≤ 375px SMALL PHONE
+============================================== */
+@media (max-width: 375px) {
+  .landing-page .contact-section {
+    padding: 16px 12px 40px;
+  }
+  .landing-page .contact-form {
+    padding: 18px 14px;
+    border-radius: 12px;
+  }
+  .landing-page .form-grid {
+    gap: 14px;
+  }
+  .landing-page .field input,
+  .landing-page .field textarea {
+    padding: 11px 12px;
+    font-size: 13.5px;
+    border-radius: 8px;
+  }
+  .landing-page .field textarea {
+    min-height: 110px;
+  }
+  .landing-page .submit-btn {
+    padding: 13px 28px;
+    font-size: 13px;
+  }
+  .landing-page .get-in-touch-section {
+    padding: 44px 12px 52px;
+  }
+  .landing-page .touch-header h2 {
+    font-size: clamp(20px, 6.5vw, 26px);
+  }
+  .landing-page .info-card {
+    padding: 24px 16px;
+    border-radius: 14px;
+  }
+  .landing-page .text-mask h1 {
+    font-size: clamp(24px, 9vw, 36px);
+  }
+}
+
+/* ==============================================
+   CONTACT PAGE — RESPONSIVE ≤ 320px TINY
+============================================== */
+@media (max-width: 320px) {
+  .landing-page .contact-section {
+    padding: 12px 10px 32px;
+  }
+  .landing-page .contact-form {
+    padding: 14px 12px;
+  }
+  .landing-page .field label {
+    font-size: 13px;
+  }
+  .landing-page .field input,
+  .landing-page .field textarea {
+    padding: 10px 10px;
+    font-size: 13px;
+  }
+  .landing-page .submit-btn {
+    padding: 12px 24px;
+    font-size: 12px;
+  }
+  .landing-page .get-in-touch-section {
+    padding: 36px 10px 44px;
+  }
+  .landing-page .touch-header h2 {
+    font-size: clamp(18px, 6.5vw, 24px);
+  }
+  .landing-page .info-card {
+    padding: 20px 14px;
+  }
+  .landing-page .text-mask h1 {
+    font-size: clamp(20px, 9vw, 30px);
   }
 }
 
@@ -3222,7 +5270,12 @@
 .landing-page .skeleton-image {
   width: 100%;
   height: 220px;
-  background: linear-gradient(90deg, var(--lp-border) 25%, var(--lp-bg-card) 50%, var(--lp-border) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--lp-border) 25%,
+    var(--lp-bg-card) 50%,
+    var(--lp-border) 75%
+  );
   background-size: 200% 100%;
   animation: lp-skeleton-shimmer 1.5s infinite;
 }
@@ -3230,7 +5283,12 @@
 .landing-page .skeleton-title {
   height: 24px;
   width: 80%;
-  background: linear-gradient(90deg, var(--lp-border) 25%, var(--lp-bg-card) 50%, var(--lp-border) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--lp-border) 25%,
+    var(--lp-bg-card) 50%,
+    var(--lp-border) 75%
+  );
   background-size: 200% 100%;
   animation: lp-skeleton-shimmer 1.5s infinite;
   border-radius: 8px;
@@ -3240,7 +5298,12 @@
 .landing-page .skeleton-text {
   height: 16px;
   width: 100%;
-  background: linear-gradient(90deg, var(--lp-border) 25%, var(--lp-bg-card) 50%, var(--lp-border) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--lp-border) 25%,
+    var(--lp-bg-card) 50%,
+    var(--lp-border) 75%
+  );
   background-size: 200% 100%;
   animation: lp-skeleton-shimmer 1.5s infinite;
   border-radius: 8px;
@@ -3250,7 +5313,12 @@
 .landing-page .skeleton-meta {
   height: 14px;
   width: 60%;
-  background: linear-gradient(90deg, var(--lp-border) 25%, var(--lp-bg-card) 50%, var(--lp-border) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--lp-border) 25%,
+    var(--lp-bg-card) 50%,
+    var(--lp-border) 75%
+  );
   background-size: 200% 100%;
   animation: lp-skeleton-shimmer 1.5s infinite;
   border-radius: 8px;

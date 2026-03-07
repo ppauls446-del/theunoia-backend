@@ -20,41 +20,23 @@ const servicesData = [
     description: 'Robust, scalable digital solutions built with performance, security, and long-term growth in mind.',
     videoUrl: '',
   },
+
   {
     id: 4,
-    title: 'Digital Marketing',
-    skills: ['SEO', 'Google Ads', 'Social media', 'Content marketing', 'CRO', 'Email marketing'],
-    description: 'Strategy-led marketing focused on visibility, engagement, and measurable business results.',
-    videoUrl: '',
-  },
-  {
-    id: 5,
     title: 'Graphic Design & Visual Arts',
     skills: ['Branding', 'UI / UX', 'Web design', 'Motion graphics', '3D rendering', 'Illustration'],
     description: 'Visual systems and designs that balance creativity, clarity, and strong brand identity.',
     videoUrl: '',
   },
+
   {
-    id: 6,
-    title: 'Administrative & Support',
-    skills: ['Email management', 'Calendar management', 'CRM entry', 'Research', 'Workflow setup', 'Documentation'],
-    description: 'Structured support and efficient workflows that help teams stay organized and focused.',
-    videoUrl: '',
-  },
-  {
-    id: 7,
+    id: 5,
     title: 'Photography & Cinematic Arts',
     skills: ['Cinematography', 'Product photography', 'Color grading', 'Drone videography', 'Short films', 'Storyboarding'],
     description: 'Cinematic visuals crafted to capture emotion, detail, and narrative depth.',
     videoUrl: '',
   },
-  {
-    id: 8,
-    title: 'Lifestyle, Creative & Misc',
-    skills: ['Interior design', 'Fitness coaching', 'Voice acting', 'Event planning', 'VR content', 'Travel planning'],
-    description: 'Personalized creative services shaped around individuality, expression, and modern lifestyles.',
-    videoUrl: '',
-  },
+
 ];
 
 const ServiceCard = ({ service }: { service: typeof servicesData[0] }) => {

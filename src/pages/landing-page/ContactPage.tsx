@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './styles.css';
 
+
 // Creations data for dropdown
 const creationsData = [
   { title: 'VIDEO EDITING' },
@@ -84,6 +85,7 @@ const InfoCard = ({
 
 const ContactPage = () => {
   const [isCreationsOpen, setIsCreationsOpen] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [formData, setFormData] = useState({
@@ -95,6 +97,18 @@ const ContactPage = () => {
   const navigate = useNavigate();
   const topMaskRef = useRef<HTMLDivElement>(null);
   const bottomMaskRef = useRef<HTMLDivElement>(null);
+
+  const toggleNav = () => setIsNavOpen((prev) => !prev);
+
+  // Sync body class for CSS nav drawer
+  useEffect(() => {
+    if (isNavOpen) {
+      document.body.classList.add('nav-open');
+    } else {
+      document.body.classList.remove('nav-open');
+    }
+    return () => document.body.classList.remove('nav-open');
+  }, [isNavOpen]);
 
   // Contact reveal animation
   useEffect(() => {
@@ -139,7 +153,7 @@ const ContactPage = () => {
   const infoCards = [
     {
       title: 'Head Office',
-      info: 'Jalan Camplung Miner No 22<br>Jakarta - Indonesia',
+      info: 'M/S THEUNOiA LLP Lakshmi nagar Chandrapur<br>Maharashtra-442401',
       icon: (
         <svg
           viewBox="0 0 24 24"
@@ -156,7 +170,7 @@ const ContactPage = () => {
     },
     {
       title: 'Email us',
-      info: 'support@yourdomain.ltd<br>hello@yourdomain.ltd',
+      info: 'Support@theunoia.com',
       icon: (
         <svg
           viewBox="0 0 24 24"
@@ -173,7 +187,7 @@ const ContactPage = () => {
     },
     {
       title: 'Call us',
-      info: 'Phone: +6221-0002-2032<br>Fax: +6221-0002-2033',
+      info: 'Phone: +91 6374214583',
       icon: (
         <svg
           viewBox="0 0 24 24"
@@ -195,13 +209,13 @@ const ContactPage = () => {
       <header className="landing-navbar">
         <div className="landing-logo">
           <Link to="/">
-            <img src="/assets/THEUNOIA-logo.png" alt="Theunoia" />
+            <img src="/images/theunoia-logo.png" alt="Theunoia" />
           </Link>
         </div>
 
-        <nav className="landing-nav-links">
+        <nav className={`landing-nav-links${isNavOpen ? ' is-open' : ''}`}>
           <a
-            href="#creations"
+            href="creations"
             className={`has-creations ${isCreationsOpen ? 'open' : ''}`}
             onMouseEnter={() => handleCreationsHover(true)}
             onMouseLeave={() => handleCreationsHover(false)}
@@ -209,7 +223,7 @@ const ContactPage = () => {
             Our Creations
             <span className="dropdown-icon">▾</span>
           </a>
-          <a href="#features">Features</a>
+          <a href="features">Features</a>
           <Link to="/blog">Blog</Link>
           <Link to="/faq">FAQ</Link>
           <Link to="/contact" className="active">
@@ -217,7 +231,12 @@ const ContactPage = () => {
           </Link>
         </nav>
 
-        <button className="landing-nav-toggle" aria-label="Toggle menu">
+        <button
+          className={`landing-nav-toggle${isNavOpen ? ' is-open' : ''}`}
+          aria-label={isNavOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isNavOpen}
+          onClick={toggleNav}
+        >
           <span></span>
           <span></span>
           <span></span>
@@ -403,7 +422,7 @@ const ContactPage = () => {
           <div className="hero-right">
             <img
               className="hero-image"
-              src="/assets/wolf.jpg"
+              src="/images/wolf.jpg"
               alt="Person working on laptop"
             />
           </div>

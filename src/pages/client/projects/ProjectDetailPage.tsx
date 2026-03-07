@@ -273,9 +273,30 @@ const ClientProjectDetailPage = () => {
               <div className="flex-1 max-w-3xl">
                 <div className="flex gap-1.5 mb-3.5">
                   {/* Project Status Badge */}
-                  <span className="px-2 py-0.5 bg-accent-green text-[#052005] text-[9px] font-bold rounded-full flex items-center gap-1">
-                    <span className="size-1.5 rounded-full bg-[#145214]"></span> {project.status === 'open' ? 'Active Project' : project.status === 'in_progress' ? 'In Progress' : 'Completed'}
-                  </span>
+                  {(() => {
+                    const status = project.status;
+                    let badgeClass = "bg-accent-green text-[#052005]";
+                    let dotClass = "bg-[#145214]";
+                    let label = "Active Project";
+
+                    if (status === 'in_progress') {
+                      label = "In Progress";
+                    } else if (status === 'completion_requested') {
+                      badgeClass = "bg-amber-100 text-amber-900 border border-amber-200";
+                      dotClass = "bg-amber-500";
+                      label = "Completion Requested";
+                    } else if (status === 'completed') {
+                      label = "Completed";
+                    } else if (status === 'open') {
+                      label = "Open for Bids";
+                    }
+
+                    return (
+                      <span className={`px-2 py-0.5 ${badgeClass} text-[9px] font-bold rounded-full flex items-center gap-1`}>
+                        <span className={`size-1.5 rounded-full ${dotClass}`}></span> {label}
+                      </span>
+                    );
+                  })()}
                   {/* Bidding Status Badge */}
                   <span className={`px-2 py-0.5 text-[9px] font-bold rounded-full flex items-center gap-1 ${isBiddingClosed
                     ? 'bg-red-100 text-red-700'

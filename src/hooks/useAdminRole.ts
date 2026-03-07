@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useAdminRole = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -25,12 +25,18 @@ export const useAdminRole = () => {
 
         if (error) {
           console.error('Error checking admin role:', error);
+          if (error.message?.includes('JWT expired') || error.code === 'PGRST303') {
+            await signOut();
+          }
           setIsAdmin(false);
         } else {
           setIsAdmin(!!data);
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error checking admin role:', err);
+        if (err.message?.includes('JWT expired') || err.code === 'PGRST303') {
+          await signOut();
+        }
         setIsAdmin(false);
       } finally {
         setLoading(false);
@@ -38,7 +44,7 @@ export const useAdminRole = () => {
     };
 
     checkAdminRole();
-  }, [user]);
+  }, [user, signOut]);
 
   return { isAdmin, loading };
 };

@@ -76,13 +76,13 @@ const Navbar = () => {
       <header className="landing-navbar">
         <div className="landing-logo">
           <Link to="/">
-            <img src="/assets/THEUNOIA-logo.png" alt="Theunoia" />
+            <img src="/images/theunoia-logo.png" alt="Theunoia" />
           </Link>
         </div>
 
         <nav className="landing-nav-links">
           <a
-            href="#creations"
+            href="creations"
             className={`has-creations ${isCreationsOpen || isAsideOpen ? 'open' : ''}`}
             onClick={handleCreationsClick}
             onMouseEnter={() => handleCreationsHover(true)}
@@ -91,7 +91,7 @@ const Navbar = () => {
             Our Creations
             <span className="dropdown-icon">▾</span>
           </a>
-          <a href="#features">Features</a>
+          <a href="features">Features</a>
           <Link to="/blog" className={isActive('/blog') ? 'act' : ''}>Blog</Link>
           <Link to="/faq" className={isActive('/faq') ? 'act' : ''}>FAQ</Link>
           <Link to="/contact" className={isActive('/contact') ? 'act' : ''}>Contact</Link>

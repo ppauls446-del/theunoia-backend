@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './styles.css';
 
@@ -159,8 +159,21 @@ const FAQItem = ({ question, answer }: { question: string; answer: string }) => 
 
 const FAQPage = () => {
   const [isCreationsOpen, setIsCreationsOpen] = useState(false);
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const [email, setEmail] = useState('');
   const navigate = useNavigate();
+
+  const toggleNav = () => setIsNavOpen((prev) => !prev);
+
+  // Sync body class for CSS nav drawer
+  useEffect(() => {
+    if (isNavOpen) {
+      document.body.classList.add('nav-open');
+    } else {
+      document.body.classList.remove('nav-open');
+    }
+    return () => document.body.classList.remove('nav-open');
+  }, [isNavOpen]);
 
   const handleCreationsHover = (isHovering: boolean) => {
     setIsCreationsOpen(isHovering);
@@ -178,13 +191,13 @@ const FAQPage = () => {
       <header className="landing-navbar">
         <div className="landing-logo">
           <Link to="/">
-            <img src="/assets/THEUNOIA-logo.png" alt="Theunoia" />
+            <img src="/images/theunoia-logo.png" alt="Theunoia" />
           </Link>
         </div>
 
-        <nav className="landing-nav-links">
+        <nav className={`landing-nav-links${isNavOpen ? ' is-open' : ''}`}>
           <a
-            href="#creations"
+            href="creations"
             className={`has-creations ${isCreationsOpen ? 'open' : ''}`}
             onMouseEnter={() => handleCreationsHover(true)}
             onMouseLeave={() => handleCreationsHover(false)}
@@ -192,11 +205,22 @@ const FAQPage = () => {
             Our Creations
             <span className="dropdown-icon">▾</span>
           </a>
-          <a href="#features">Features</a>
+          <a href="features">Features</a>
           <Link to="/blog">Blog</Link>
           <Link to="/faq" className="active">FAQ</Link>
           <Link to="/contact">Contact</Link>
         </nav>
+
+        <button
+          className={`landing-nav-toggle${isNavOpen ? ' is-open' : ''}`}
+          aria-label={isNavOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isNavOpen}
+          onClick={toggleNav}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
 
         <div className="landing-nav-actions">
           <button
@@ -294,7 +318,7 @@ const FAQPage = () => {
           <div className="hero-right">
             <img
               className="hero-image"
-              src="/assets/wolf.jpg"
+              src="/images/wolf.jpg"
               alt="Person working on laptop"
             />
           </div>

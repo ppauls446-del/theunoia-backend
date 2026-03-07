@@ -60,7 +60,7 @@ const Hero = () => {
           loop
           playsInline
         >
-          <source src="/assets/demovid.mp4" type="video/mp4" />
+          <source src="/Video/demovid.mp4" type="video/mp4" />
         </video>
 
         <div className="landing-hero-overlay"></div>

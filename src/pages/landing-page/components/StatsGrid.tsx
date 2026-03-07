@@ -4,25 +4,25 @@ const statsData = [
   {
     heading: 'COLLEGE STUDENTS',
     number: '45M+',
-    image: '/assets/collegestudents.png',
+    image: '/images/collegestudents.png',
     text: 'A massive talent pool ready to contribute',
   },
   {
     heading: 'FINANCIALLY DEPENDENT STUDENTS',
     number: '31M+',
-    image: '/assets/financiallydependent.png',
+    image: '/images/financiallydependent.png',
     text: 'Looking for income opportunity',
   },
   {
     heading: 'FINANCIALLY INDEPENDENT STUDENTS',
     number: '14M+',
-    image: '/assets/financiallyindependent.png',
+    image: '/images/financiallyindependent.png',
     text: 'Already earning while studying',
   },
   {
     heading: 'SKILLED BUT NOT EARNING',
     number: '19M+',
-    image: '/assets/skilledbutnotearning.png',
+    image: '/images/skilledbutnotearning.png',
     text: 'Talent waiting for the right platform',
   },
   {
@@ -34,25 +34,25 @@ const statsData = [
   {
     heading: 'STUDENT FREELANCERS',
     number: '9M+',
-    image: '/assets/studentfreelancers.png',
+    image: '/images/studentfreelancers.png',
     text: 'Actively working independently',
   },
   {
     heading: 'RECURRING CLIENTS',
     number: '22M+',
-    image: '/assets/recurringclients.png',
+    image: '/images/recurringclients.png',
     text: 'Long-term and repeat freelance demand',
   },
   {
     heading: 'SME & STARTUPS',
     number: '63M+',
-    image: '/assets/sme&startups.png',
+    image: '/images/sme&startups.png',
     text: "India's fast-growing businesses driving freelance demand",
   },
   {
     heading: 'TALENT GAPS',
     number: '41M+',
-    image: '/assets/talentgaps.png',
+    image: '/images/talentgaps.png',
     text: 'Businesses struggling to find the right skills',
   },
 ];
@@ -72,9 +72,27 @@ const StatsGrid = () => {
 
       const section = sectionRef.current;
       const rect = section.getBoundingClientRect();
-      const total = section.offsetHeight - window.innerHeight;
+      const viewportHeight = window.innerHeight;
+      const total = section.offsetHeight - viewportHeight;
 
-      // Calculate progress
+      // If section is completely above viewport (scrolled past)
+      // Keep at final state
+      if (rect.bottom < 0) {
+        const finalScale = 1 / 3;
+        mainCardRef.current.style.transform = `scale(${finalScale})`;
+        setIsRevealed(true);
+        return;
+      }
+
+      // If section is below viewport (not reached yet)
+      // Reset to initial state
+      if (rect.top > viewportHeight) {
+        mainCardRef.current.style.transform = 'scale(1)';
+        setIsRevealed(false);
+        return;
+      }
+
+      // Calculate progress only when in viewport
       let progress = -rect.top / total;
       progress = Math.min(Math.max(progress, 0), 1);
 
@@ -90,13 +108,21 @@ const StatsGrid = () => {
       }
     };
 
+    // Set initial state explicitly before adding listeners
+    if (mainCardRef.current) {
+      mainCardRef.current.style.transform = 'scale(1)';
+    }
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll);
-    handleScroll();
+    
+    // Delayed initial check to ensure layout has settled
+    const timeoutId = setTimeout(handleScroll, 100);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -109,12 +135,7 @@ const StatsGrid = () => {
               <div className="landing-cell" key={index}>
                 {stat.heading && (
                   <div className="cell-card premium">
-                    <h3 className="cell-heading">{stat.heading}</h3>
-                    <div className="cell-number">{stat.number}</div>
-                    <div className="cell-image-wrap">
-                      <img src={stat.image} alt={stat.heading} />
-                    </div>
-                    <p className="cell-text">{stat.text}</p>
+                    <img src={stat.image} alt={stat.heading || 'Stat image'} className="cell-bg-image" />
                   </div>
                 )}
               </div>

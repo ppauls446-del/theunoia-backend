@@ -102,6 +102,10 @@ export const DashboardLayout = () => {
 
       if (error) {
         console.error('Error fetching unread count:', error);
+        if (error.message?.includes('JWT expired') || (error as any).code === 'PGRST303') {
+          console.log('JWT expired detected in unreadCount, redirecting to login');
+          signOut().then(() => navigate('/login'));
+        }
         return 0;
       }
 
@@ -121,7 +125,15 @@ export const DashboardLayout = () => {
             .eq('user_id', user.id)
             .single();
 
-          if (error) throw error;
+          if (error) {
+            if (error.message?.includes('JWT expired') || error.code === 'PGRST303') {
+              console.log('JWT expired detected in fetchProfile, redirecting to login');
+              await signOut();
+              navigate('/login');
+              return;
+            }
+            throw error;
+          }
           setProfile(data ?? null);
 
           // Check verification status
@@ -141,7 +153,7 @@ export const DashboardLayout = () => {
     };
 
     fetchProfile();
-  }, [user]);
+  }, [user, signOut, navigate]);
 
   // Fetch notifications
   useEffect(() => {
@@ -176,8 +188,11 @@ export const DashboardLayout = () => {
           .limit(5);
 
         setNewBidsOnProjects(recentBids || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching notifications:', error);
+        if (error.message?.includes('JWT expired') || error.code === 'PGRST303') {
+          signOut().then(() => navigate('/login'));
+        }
       }
     };
 

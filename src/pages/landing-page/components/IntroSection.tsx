@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 const IntroSection = () => {
   const sectionRef = useRef<HTMLElement>(null);
@@ -20,15 +20,27 @@ const IntroSection = () => {
       const viewportHeight = window.innerHeight;
       const total = sectionRef.current.offsetHeight - viewportHeight;
 
-      // Do nothing until section reaches viewport
-      if (rect.top > viewportHeight) return;
+      // Hide everything if section is not in viewport range
+      if (rect.bottom < 0 || rect.top > viewportHeight) {
+        squareRef.current.style.opacity = '0';
+        squareRef.current.style.visibility = 'hidden';
+        contentRef.current.style.opacity = '0';
+        setHeaderVisible(false);
+        setVideoSectionVisible(false);
+        setTextSectionVisible(false);
+        return;
+      }
 
-      // Progress based on section scroll
+      // Section is in viewport - show and animate
+      squareRef.current.style.opacity = '1';
+      squareRef.current.style.visibility = 'visible';
+
+      // Calculate progress
       let progress = -rect.top / total;
       progress = Math.min(Math.max(progress, 0), 1);
 
       // Square transform animation
-      const scale = progress * 80;
+      const scale = progress * 8;
       const rotate = progress * 720;
       squareRef.current.style.transform = `scale(${scale}) rotate(${rotate}deg)`;
 
@@ -47,13 +59,24 @@ const IntroSection = () => {
       }
     };
 
+    // Set initial state explicitly
+    if (squareRef.current && contentRef.current) {
+      squareRef.current.style.transform = 'scale(0) rotate(0deg)';
+      squareRef.current.style.opacity = '0';
+      squareRef.current.style.visibility = 'hidden';
+      contentRef.current.style.opacity = '0';
+    }
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll);
-    handleScroll();
+    
+    // Delayed initial check
+    const timeoutId = setTimeout(handleScroll, 100);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -77,7 +100,8 @@ const IntroSection = () => {
 
   const handleTimeUpdate = () => {
     if (videoRef.current && progressRef.current) {
-      const progress = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      const progress =
+        (videoRef.current.currentTime / videoRef.current.duration) * 100;
       progressRef.current.value = String(progress);
     }
   };
@@ -98,16 +122,18 @@ const IntroSection = () => {
           <div className="intro-layout">
             {/* LEFT COLUMN */}
             <div className="intro-left">
-              <div className={`intro-header ${headerVisible ? 'visible' : ''}`}>
+              <div className={`intro-header ${headerVisible ? "visible" : ""}`}>
                 <div className="intro-label">Why Skill Bridge</div>
                 <h1 className="intro-main-title">
-                  TALENT SHOULDN'T BE BLOCKED
+                  PAY ONLY FOR TALENT
                   <br />
-                  BY CERTIFICATES.
+                  NOT INFLATED FEES.
                 </h1>
               </div>
 
-              <div className={`intro-video-section ${videoSectionVisible ? 'visible' : ''}`}>
+              <div
+                className={`intro-video-section ${videoSectionVisible ? "visible" : ""}`}
+              >
                 <div className="video-container">
                   <video
                     className="intro-video"
@@ -116,12 +142,12 @@ const IntroSection = () => {
                     muted={isMuted}
                     onTimeUpdate={handleTimeUpdate}
                   >
-                    <source src="/assets/sai.mp4" type="video/mp4" />
+                    <source src="/Video/sai.mp4" type="video/mp4" />
                   </video>
 
                   <div className="video-controls">
                     <button className="control-btn" onClick={togglePlay}>
-                      {isPlaying ? '⏸' : '▶'}
+                      {isPlaying ? "⏸" : "▶"}
                     </button>
                     <input
                       type="range"
@@ -131,7 +157,7 @@ const IntroSection = () => {
                       onChange={handleProgressChange}
                     />
                     <button className="control-btn" onClick={toggleMute}>
-                      {isMuted ? '🔇' : '🔊'}
+                      {isMuted ? "🔇" : "🔊"}
                     </button>
                   </div>
                 </div>
@@ -139,7 +165,9 @@ const IntroSection = () => {
             </div>
 
             {/* RIGHT COLUMN */}
-            <div className={`intro-text-section ${textSectionVisible ? 'visible' : ''}`}>
+            <div
+              className={`intro-text-section ${textSectionVisible ? "visible" : ""}`}
+            >
               <div className="intro-card pricing-style">
                 <h3 className="pricing-title">For Clients</h3>
 
@@ -177,7 +205,8 @@ const IntroSection = () => {
                 </p>
 
                 <div className="pricing-cta">
-                  We bridge the gap between student talent and real client needs.
+                  We bridge the gap between student talent and real client
+                  needs.
                 </div>
               </div>
             </div>

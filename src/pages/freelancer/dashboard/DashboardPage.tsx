@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   Search,
   Target, Calendar, CheckSquare2, Eye,
+  Rocket,
   Flame, Quote, ArrowRight, Plus,
   Wallet, Package, FileCheck, Gavel, Rss,
   GraduationCap, Briefcase, Star, Users, Clock, TrendingUp,
@@ -697,6 +698,15 @@ const DashboardPage = () => {
     }
   }, []);
 
+  // Fetch open projects for bidding
+  const { data: openProjects = [], isLoading: isLoadingProjects } = useQuery({
+    queryKey: ['open-projects'],
+    queryFn: async () => {
+      return await ProjectService.getOpenProjects();
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
   return (
     <div className="flex-1 flex flex-col">
       {/* Main Content Area */}
@@ -855,196 +865,82 @@ const DashboardPage = () => {
             <span>Suggested for you</span>
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Project Card 1 */}
-            <div className="group bg-white rounded-[9px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#f1f0f5] flex flex-col h-full">
-              <div className="relative h-[126px] overflow-hidden">
-                <video
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                >
-                  <source src={encodeURI(DASHBOARD_VIDEO_1)} type="video/mp4" />
-                </video>
-              </div>
-              <div className="p-3.5 flex-1 flex flex-col">
-                <div className="flex justify-between items-start mb-1.5">
-                  <h3 className="font-bold text-sm leading-snug truncate pr-2 group-hover:text-primary transition-colors text-black">Project One</h3>
-                  <div className="flex items-center gap-1.5">
-                    <Badge className="px-1 py-0.25 bg-secondary text-[#121118] text-[7px] font-bold uppercase tracking-tight rounded-md shadow-sm">
-                      Skillbridge Choice
-                    </Badge>
-                    <span className="text-[9px] font-medium text-[#68608a] whitespace-nowrap">Jan 1</span>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[#68608a] line-clamp-2 mb-2.5">Project description placeholder text goes here</p>
-                <div className="mt-auto space-y-2.5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Estimated Budget</span>
-                      <span className="text-sm font-extrabold text-primary">₹7,000</span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Deadline</span>
-                      <span className="text-[11px] font-bold text-black">Flexible</span>
-                    </div>
-                  </div>
-                  <div className="pt-2.5 border-t border-[#f1f0f5] flex items-center justify-between">
-                    <span className="px-2 py-0.5 bg-accent-green text-[#052005] text-[9px] font-bold rounded-full flex items-center gap-1">
-                      <span className="size-1.5 rounded-full bg-[#145214]"></span> Bid Open
-                    </span>
-                    <button className="text-primary hover:text-primary/80 transition-colors" onClick={() => navigate('/projects')}>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {isLoadingProjects ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-muted animate-pulse rounded-[9px] h-[300px]" />
+              ))
+            ) : openProjects.length > 0 ? (
+              openProjects.slice(0, 4).map((project, index) => {
+                const videoSource = [DASHBOARD_VIDEO_1, DASHBOARD_VIDEO_2, DASHBOARD_VIDEO_3, DASHBOARD_VIDEO_4][index % 4];
+                const deadlineDate = project.bidding_deadline ? new Date(project.bidding_deadline) : null;
+                const formattedDeadline = deadlineDate
+                  ? deadlineDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  : 'Flexible';
+                const createdDate = new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-            {/* Project Card 2 */}
-            <div className="group bg-white rounded-[9px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#f1f0f5] flex flex-col h-full">
-              <div className="relative h-[126px] overflow-hidden">
-                <video
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  poster="/images/dashboard-hero.png"
-                >
-                  <source src={encodeURI(DASHBOARD_VIDEO_2)} type="video/mp4" />
-                </video>
-              </div>
-              <div className="p-3.5 flex-1 flex flex-col">
-                <div className="flex justify-between items-start mb-1.5">
-                  <h3 className="font-bold text-sm leading-snug truncate pr-2 group-hover:text-primary transition-colors text-black">Project Two</h3>
-                  <div className="flex items-center gap-1.5">
-                    <Badge className="px-1 py-0.25 bg-secondary text-[#121118] text-[7px] font-bold uppercase tracking-tight rounded-md shadow-sm">
-                      Top Recommender
-                    </Badge>
-                    <span className="text-[9px] font-medium text-[#68608a] whitespace-nowrap">Jan 1</span>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[#68608a] line-clamp-2 mb-2.5">Project description placeholder text goes here</p>
-                <div className="mt-auto space-y-2.5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Estimated Budget</span>
-                      <span className="text-sm font-extrabold text-primary">₹7,000</span>
+                return (
+                  <div key={project.id} className="group bg-white rounded-[9px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#f1f0f5] flex flex-col h-full">
+                    <div className="relative h-[126px] overflow-hidden">
+                      <video
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      >
+                        <source src={encodeURI(videoSource)} type="video/mp4" />
+                      </video>
                     </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Deadline</span>
-                      <span className="text-[11px] font-bold text-black">Flexible</span>
-                    </div>
-                  </div>
-                  <div className="pt-2.5 border-t border-[#f1f0f5] flex items-center justify-between">
-                    <span className="px-2 py-0.5 bg-accent-green text-[#052005] text-[9px] font-bold rounded-full flex items-center gap-1">
-                      <span className="size-1.5 rounded-full bg-[#145214]"></span> Bid Open
-                    </span>
-                    <button className="text-primary hover:text-primary/80 transition-colors" onClick={() => navigate('/projects')}>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Project Card 3 */}
-            <div className="group bg-white rounded-[9px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#f1f0f5] flex flex-col h-full">
-              <div className="relative h-[126px] overflow-hidden">
-                <video
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                >
-                  <source src={encodeURI(DASHBOARD_VIDEO_3)} type="video/mp4" />
-                </video>
-              </div>
-              <div className="p-3.5 flex-1 flex flex-col">
-                <div className="flex justify-between items-start mb-1.5">
-                  <h3 className="font-bold text-sm leading-snug truncate pr-2 group-hover:text-primary transition-colors text-black">Project Three</h3>
-                  <div className="flex items-center gap-1.5">
-                    <Badge className="px-1 py-0.25 bg-secondary text-[#121118] text-[7px] font-bold uppercase tracking-tight rounded-md shadow-sm">
-                      Skillbridge Choice
-                    </Badge>
-                    <span className="text-[9px] font-medium text-[#68608a] whitespace-nowrap">Jan 1</span>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[#68608a] line-clamp-2 mb-2.5">Project description placeholder text goes here</p>
-                <div className="mt-auto space-y-2.5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Estimated Budget</span>
-                      <span className="text-sm font-extrabold text-primary">₹7,000</span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Deadline</span>
-                      <span className="text-[11px] font-bold text-black">Flexible</span>
+                    <div className="p-3.5 flex-1 flex flex-col">
+                      <div className="flex justify-between items-start mb-1.5">
+                        <h3 className="font-bold text-sm leading-snug truncate pr-2 group-hover:text-primary transition-colors text-black" title={project.title}>
+                          {project.title}
+                        </h3>
+                        <div className="flex items-center gap-1.5">
+                          <Badge className="px-1 py-0.25 bg-secondary text-[#121118] text-[7px] font-bold uppercase tracking-tight rounded-md shadow-sm">
+                            {index % 2 === 0 ? 'Skillbridge Choice' : 'Top Choice'}
+                          </Badge>
+                          <span className="text-[9px] font-medium text-[#68608a] whitespace-nowrap">{createdDate}</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-[#68608a] line-clamp-2 mb-2.5">
+                        {project.description || 'No description available'}
+                      </p>
+                      <div className="mt-auto space-y-2.5">
+                        <div className="flex items-start justify-between">
+                          <div className="flex flex-col">
+                            <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Estimated Budget</span>
+                            <span className="text-sm font-extrabold text-primary">₹{project.budget?.toLocaleString('en-IN') || 'TBD'}</span>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Deadline</span>
+                            <span className="text-[11px] font-bold text-black">{formattedDeadline}</span>
+                          </div>
+                        </div>
+                        <div className="pt-2.5 border-t border-[#f1f0f5] flex items-center justify-between">
+                          <span className="px-2 py-0.5 bg-accent-green text-[#052005] text-[9px] font-bold rounded-full flex items-center gap-1">
+                            <span className="size-1.5 rounded-full bg-[#145214]"></span> Bid Open
+                          </span>
+                          <button
+                            className="text-primary hover:text-primary/80 transition-colors"
+                            onClick={() => navigate(`/projects/${project.id}`)}
+                          >
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="pt-2.5 border-t border-[#f1f0f5] flex items-center justify-between">
-                    <span className="px-2 py-0.5 bg-accent-green text-[#052005] text-[9px] font-bold rounded-full flex items-center gap-1">
-                      <span className="size-1.5 rounded-full bg-[#145214]"></span> Bid Open
-                    </span>
-                    <button className="text-primary hover:text-primary/80 transition-colors" onClick={() => navigate('/projects')}>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
+                );
+              })
+            ) : (
+              <div className="col-span-1 md:col-span-4 py-10 text-center border-2 border-dashed border-border rounded-xl">
+                <p className="text-muted-foreground text-sm">No projects currently open for bidding. Check back soon!</p>
               </div>
-            </div>
-
-            {/* Project Card 4 */}
-            <div className="group bg-white rounded-[9px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-[#f1f0f5] flex flex-col h-full">
-              <div className="relative h-[126px] overflow-hidden">
-                <video
-                  className="w-full h-full object-cover"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                >
-                  <source src={encodeURI(DASHBOARD_VIDEO_4)} type="video/mp4" />
-                </video>
-              </div>
-              <div className="p-3.5 flex-1 flex flex-col">
-                <div className="flex justify-between items-start mb-1.5">
-                  <h3 className="font-bold text-sm leading-snug truncate pr-2 group-hover:text-primary transition-colors text-black">Project Four</h3>
-                  <div className="flex items-center gap-1.5">
-                    <Badge className="px-1 py-0.25 bg-secondary text-[#121118] text-[7px] font-bold uppercase tracking-tight rounded-md shadow-sm">
-                      Top Choice for you
-                    </Badge>
-                    <span className="text-[9px] font-medium text-[#68608a] whitespace-nowrap">Jan 1</span>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[#68608a] line-clamp-2 mb-2.5">Project description placeholder text goes here</p>
-                <div className="mt-auto space-y-2.5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Estimated Budget</span>
-                      <span className="text-sm font-extrabold text-primary">₹7,000</span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className="text-[9px] font-bold text-[#68608a] uppercase tracking-tight">Deadline</span>
-                      <span className="text-[11px] font-bold text-black">Flexible</span>
-                    </div>
-                  </div>
-                  <div className="pt-2.5 border-t border-[#f1f0f5] flex items-center justify-between">
-                    <span className="px-2 py-0.5 bg-accent-green text-[#052005] text-[9px] font-bold rounded-full flex items-center gap-1">
-                      <span className="size-1.5 rounded-full bg-[#145214]"></span> Bid Open
-                    </span>
-                    <button className="text-primary hover:text-primary/80 transition-colors" onClick={() => navigate('/projects')}>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
+
 
         {/* Earnings & Profit Analytics */}
         <div className="mb-5 w-full">
@@ -1087,55 +983,21 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Our Top Picks For Your Skills – 3 items, swipe every 3s (like Latest in Tech), loop */}
+        {/* Our Top Picks For Your Skills – Coming Soon */}
         <div className="mb-5 w-full">
           <h3 className="text-base font-bold mb-3 flex items-center gap-1.5">
-            <GraduationCap className="w-3.5 h-3.5 text-primary" />
+            <GraduationCap className="w-4 h-4 text-primary" />
             Our Top Picks For Your Skills
           </h3>
-          <div className="relative overflow-hidden">
-            <div
-              className="flex transition-transform duration-700 ease-in-out"
-              style={{ transform: `translateX(-${topPicksSkillIndex * 100}%)` }}
-            >
-              {topPicksSkills.map((pick) => (
-                <div
-                  key={pick.id}
-                  className="w-full flex-shrink-0 min-w-full flex flex-col md:flex-row overflow-hidden items-start"
-                >
-                  <div className="w-full md:w-[38%] h-[200px] md:h-[220px] flex-shrink-0 relative overflow-hidden">
-                    <img
-                      src={pick.image}
-                      alt={pick.title}
-                      className="w-full h-full object-cover object-center"
-                    />
-                  </div>
-                  <div className="flex-1 flex flex-col items-start pt-0 pb-4 md:pb-5 px-4 md:px-6 -mt-px">
-                    <h4 className="text-lg md:text-xl font-bold text-[#121118] leading-tight mb-1">
-                      {pick.title}
-                    </h4>
-                    <p className="text-sm text-[#68608a] mb-1">{pick.description}</p>
-                    <p className="text-sm text-[#68608a] mb-2">{pick.author}</p>
-                    <p className="text-xs text-[#68608a] mb-2">
-                      <span className="text-accent-green font-semibold">{pick.updated}</span>
-                      <span className="text-[#68608a]"> · {pick.hours} · {pick.lectures} · {pick.level}</span>
-                    </p>
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <span className="font-bold text-[#121118]">{pick.rating}</span>
-                      <span className="text-yellow-500 flex gap-0.5" aria-hidden="true">
-                        <Star className="w-4 h-4 fill-yellow-500 stroke-yellow-500" />
-                        <Star className="w-4 h-4 fill-yellow-500 stroke-yellow-500" />
-                        <Star className="w-4 h-4 fill-yellow-500 stroke-yellow-500" />
-                        <Star className="w-4 h-4 fill-yellow-500 stroke-yellow-500" />
-                        <Star className="w-4 h-4 fill-yellow-500 stroke-yellow-400" />
-                      </span>
-                      <span className="text-[#68608a]">({pick.ratingCount})</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <Card className="bg-[#FDF8F3] h-[220px] rounded-2xl border border-black/10 border-dashed flex flex-col items-center justify-center text-center p-6 transition-all hover:bg-[#FAF3EA] group">
+            <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
+              <Rocket className="w-7 h-7 text-primary animate-bounce-slow" />
             </div>
-          </div>
+            <h4 className="text-xl font-black text-[#121118] mb-2 uppercase tracking-tight">Coming Soon</h4>
+            <p className="text-sm text-[#68608a] max-w-[280px] font-medium">
+              We're curating personalized learning paths and top skill picks just for you.
+            </p>
+          </Card>
         </div>
 
         {/* Latest in Tech, Weekly Roadmap, To-Do List & Active Snapshots */}
