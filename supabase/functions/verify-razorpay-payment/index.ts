@@ -14,7 +14,16 @@ serve(async (req) => {
     }
 
     try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature, projectId } = await req.json();
+        const body = await req.json();
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            projectId,
+            paymentType,
+            bidId,
+            phaseNames
+        } = body;
 
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
             throw new Error("Missing payment verification details");
@@ -43,7 +52,7 @@ serve(async (req) => {
             .upsert({
                 razorpay_order_id: razorpay_order_id,
                 razorpay_payment_id: razorpay_payment_id,
-                project_id: projectId, // Link project if provided
+                project_id: projectId,
                 status: "captured",
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'razorpay_order_id' });
@@ -52,21 +61,143 @@ serve(async (req) => {
             console.error("Error logging payment record:", paymentError);
         }
 
-        // 2. Automate Project Completion!
+        // 2. Automate Project Status and Bid Acceptance!
         if (projectId) {
-            console.log(`Marking project ${projectId} as completed after payment verification...`);
-            const { error: projectError } = await supabase
-                .from("user_projects")
-                .update({
-                    status: 'completed',
-                    completed_at: new Date().toISOString()
-                })
-                .eq("id", projectId);
+            if (paymentType === 'advance' && bidId) {
+                console.log(`Processing advance payment for project ${projectId} and bid ${bidId}...`);
 
-            if (projectError) {
-                console.error("Error updating project status to completed:", projectError);
-                // We return failure if project update fails to ensure consistency
-                throw new Error("Payment verified but failed to update project status");
+                // 1. Accept the specific bid
+                const { error: bidError } = await supabase
+                    .from("bids")
+                    .update({ status: 'accepted' })
+                    .eq("id", bidId);
+
+                if (bidError) {
+                    console.error("Error accepting bid:", bidError);
+                    throw new Error("Payment verified but failed to accept bid");
+                }
+
+                // 2. Reject other bids for the same project
+                const { error: rejectError } = await supabase
+                    .from("bids")
+                    .update({ status: 'rejected' })
+                    .eq("project_id", projectId)
+                    .neq("id", bidId);
+
+                if (rejectError) {
+                    console.warn("Could not reject other bids:", rejectError);
+                }
+
+                // 3. Move project to in_progress
+                const { error: projectError } = await supabase
+                    .from("user_projects")
+                    .update({
+                        status: 'in_progress'
+                    })
+                    .eq("id", projectId);
+
+                if (projectError) {
+                    console.error("Error updating project status to in_progress:", projectError);
+                    throw new Error("Payment verified but failed to update project status");
+                }
+
+                // 4. Ensure phases exist and mark initial ones as paid
+                // Fetch project category to initialize phases if missing
+                const { data: projectRow } = await supabase
+                    .from("user_projects")
+                    .select("category")
+                    .eq("id", projectId)
+                    .single();
+
+                // Fetch existing phases
+                let { data: phases } = await supabase
+                    .from("project_phases")
+                    .select("id, phase_order")
+                    .eq("project_id", projectId)
+                    .order("phase_order", { ascending: true });
+
+                // If no phases, initialize them now
+                if (!phases || phases.length === 0) {
+                    console.log(`Initializing phases for project ${projectId} in edge function...`);
+                    const category = projectRow?.category || null;
+
+                    // Simplified phase mapping for Edge Function (Fallback)
+                    const PHASE_MAPPING: Record<string, string[]> = {
+                        "Writing & Content Creation": ["Drafting", "Refinement", "Finalization"],
+                        "Graphic Design & Visual Arts": ["Drafting", "Refinement", "Finalization"],
+                        "Web Development & Programming": ["Discovery", "Design", "Development", "Testing", "Finalization", "Support"],
+                        "AI, Automation & Tech Tools": ["Discovery", "Drafting", "Refinement", "Testing", "Finalization", "Support"],
+                        "Medical Writing & Documentation": ["Discovery", "Drafting", "Refinement", "Testing", "Finalization", "Support"]
+                    };
+                    const DEFAULT_PHASES = ["Discovery", "Drafting", "Refinement", "Finalization"];
+
+                    // Use passed phaseNames if available, otherwise fall back to mapping
+                    const resolvedPhaseNames = phaseNames || ((category && PHASE_MAPPING[category]) ? PHASE_MAPPING[category] : DEFAULT_PHASES);
+
+                    const phasesToInsert = resolvedPhaseNames.map((name: string, index: number) => ({
+                        project_id: projectId,
+                        phase_name: name,
+                        phase_order: index + 1,
+                        status: 'unlocked',
+                        payment_status: 'unpaid',
+                        freelancer_approved: false,
+                        client_approved: false
+                    }));
+
+                    const { data: insertedPhases, error: insertError } = await supabase
+                        .from("project_phases")
+                        .insert(phasesToInsert)
+                        .select("id, phase_order")
+                        .order("phase_order", { ascending: true });
+
+                    if (insertError) {
+                        console.error("Error initializing phases in edge function:", insertError);
+                    } else {
+                        phases = insertedPhases;
+                    }
+                }
+
+                if (phases && phases.length > 0) {
+                    const totalPhases = phases.length;
+                    const advancePhasesCount = totalPhases <= 4 ? 1 : 2;
+                    const phaseIdsToMark = phases
+                        .slice(0, advancePhasesCount)
+                        .map((p: any) => p.id);
+
+                    console.log(`Marking ${advancePhasesCount} phases as paid for project ${projectId}...`);
+                    await supabase
+                        .from("project_phases")
+                        .update({ payment_status: 'paid' })
+                        .in("id", phaseIdsToMark);
+                }
+            } else if (paymentType === 'phase') {
+                const { phaseId } = body;
+                console.log(`Processing phase payment for phase ${phaseId}...`);
+
+                const { error: phaseError } = await supabase
+                    .from("project_phases")
+                    .update({ payment_status: 'paid' })
+                    .eq("id", phaseId);
+
+                if (phaseError) {
+                    console.error("Error updating phase payment status:", phaseError);
+                    throw new Error("Payment verified but failed to update phase status");
+                }
+            } else {
+                // Legacy / Default logic: Completion payment (Project Status Update only)
+                console.log(`Marking project ${projectId} as completed after payment verification...`);
+                const { error: projectError } = await supabase
+                    .from("user_projects")
+                    .update({
+                        status: 'completed',
+                        completed_at: new Date().toISOString()
+                    })
+                    .eq("id", projectId);
+
+                if (projectError) {
+                    console.error("Error updating project status to completed:", projectError);
+                    throw new Error("Payment verified but failed to update project status");
+                }
             }
         }
 
@@ -78,7 +209,7 @@ serve(async (req) => {
             }
         );
 
-    } catch (error) {
+    } catch (error: any) {
         return new Response(
             JSON.stringify({ error: error.message }),
             {

@@ -29,6 +29,7 @@ export class ProjectTrackingService {
             phase_order: index + 1,
             // All phases are initially 'unlocked' for the initial setup phase
             status: 'unlocked',
+            payment_status: 'unpaid',
             freelancer_approved: false,
             client_approved: false
         }));
@@ -59,6 +60,7 @@ export class ProjectTrackingService {
             phase_name: p.phase_name,
             phase_order: p.phase_order,
             status: p.status as PhaseStatus,
+            payment_status: p.payment_status,
             freelancer_approved: p.freelancer_approved,
             client_approved: p.client_approved,
             locked_at: p.locked_at,
@@ -127,7 +129,7 @@ export class ProjectTrackingService {
      */
     static async startProjectWorkflow(projectId: string, phases: PhaseState[]) {
         const sortedPhases = [...phases].sort((a, b) => a.phase_order - b.phase_order);
-        
+
         // Update all phases
         const updatePromises = sortedPhases.map((phase, index) => {
             return supabase

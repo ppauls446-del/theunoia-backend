@@ -14,7 +14,7 @@ serve(async (req) => {
     }
 
     try {
-        const { projectId, amount, bidId } = await req.json();
+        const { projectId, amount, bidId, paymentType, phaseId } = await req.json();
 
         if (!projectId || !amount) {
             throw new Error("Project ID and Amount are required");
@@ -25,16 +25,19 @@ serve(async (req) => {
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // Fetch project details to verify existence
-        const { data: project, error: projectError } = await supabase
-            .from("user_projects")
-            .select("id")
-            .eq("id", projectId)
-            .single();
+        // Fetch project details to verify existence (only if projectId is provided)
+        if (projectId) {
+            const { data: project, error: projectError } = await supabase
+                .from("user_projects")
+                .select("id")
+                .eq("id", projectId)
+                .single();
 
-        if (projectError || !project) {
-            throw new Error("Project not found");
+            if (projectError || !project) {
+                throw new Error("Project not found");
+            }
         }
+
 
         // Initialize Razorpay
         const instance = new Razorpay({
@@ -46,7 +49,7 @@ serve(async (req) => {
         const currency = "INR";
 
         // Receipt length must not exceed 40 characters
-        const rawReceipt = `rcpt_${bidId || projectId}_${Date.now()}`;
+        const rawReceipt = `rcpt_${bidId || projectId || 'unknown'}_${Date.now()}`;
         const sanitizedReceipt = rawReceipt.substring(0, 40);
 
         const options = {
@@ -54,8 +57,10 @@ serve(async (req) => {
             currency,
             receipt: sanitizedReceipt,
             notes: {
-                projectId: projectId,
+                projectId: projectId || '',
                 bidId: bidId || '',
+                paymentType: paymentType || '',
+                phaseId: phaseId || '',
             },
         };
 
@@ -74,6 +79,11 @@ serve(async (req) => {
                 currency: currency,
                 status: "pending",
                 razorpay_order_id: order.id,
+                metadata: {
+                    paymentType: paymentType || null,
+                    bidId: bidId || null,
+                    phaseId: phaseId || null,
+                }
             });
 
         if (paymentError) {

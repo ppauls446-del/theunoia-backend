@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { supabase } from "@/integrations/supabase/client";
 import { ProjectTrackingService } from '@/services/ProjectTrackingService';
 import { TaskCard } from '@/pages/freelancer/projects/ProjectTracking/TaskCard';
 import { getPhasesForCategory } from '@/pages/shared/projects/ProjectTracking/phaseMapping';
@@ -40,9 +41,16 @@ import { useRazorpay } from '@/hooks/useRazorpay';
 interface ClientProjectTrackingBoardProps {
   projectId: string;
   projectCategory: string | null;
+  onTaskUpdate?: () => void;
+  projectBudget?: number;
 }
 
-export const ClientProjectTrackingBoard = ({ projectId, projectCategory }: ClientProjectTrackingBoardProps) => {
+export const ClientProjectTrackingBoard = ({
+  projectId,
+  projectCategory,
+  onTaskUpdate,
+  projectBudget = 0
+}: ClientProjectTrackingBoardProps) => {
   const { user } = useAuth();
   const { initializePayment, isProcessing } = useRazorpay();
   const phases = useMemo(() => {
@@ -162,6 +170,87 @@ export const ClientProjectTrackingBoard = ({ projectId, projectCategory }: Clien
     }
   };
 
+  const handlePayPhase = async (phaseId: string, amount: number) => {
+    try {
+      if (!projectId) return;
+
+      toast.loading(`Preparing secure checkout for ₹${amount.toLocaleString()}...`, { id: "phase-checkout" });
+
+      // 1. Create Razorpay Order
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          projectId: projectId,
+          amount: amount,
+          phaseId: phaseId,
+          paymentType: 'phase'
+        }
+      });
+
+      if (orderError) {
+        toast.dismiss("phase-checkout");
+        throw new Error(orderError.message || "Failed to initialize payment gateway");
+      }
+
+      toast.dismiss("phase-checkout");
+
+      // 2. Open Razorpay Checkout
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "",
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "The Unoia",
+        description: `Phase Payment`,
+        order_id: orderData.id,
+        handler: async (response: any) => {
+          try {
+            toast.loading("Verifying phase payment...", { id: "verify-phase-payment" });
+
+            // 3. Verify Payment
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                projectId: projectId,
+                phaseId: phaseId,
+                paymentType: 'phase'
+              }
+            });
+
+            if (verifyError || !verifyData?.success) {
+              throw new Error("Payment verification failed");
+            }
+
+            toast.dismiss("verify-phase-payment");
+            toast.success("Phase Payment Received! 🎉");
+
+            // Refresh data
+            fetchData();
+            if (onTaskUpdate) onTaskUpdate();
+          } catch (verifyErr: any) {
+            toast.dismiss("verify-phase-payment");
+            console.error("Verification error:", verifyErr);
+            toast.error("Payment received but verification failed.");
+          }
+        },
+        prefill: {
+          name: user?.user_metadata?.first_name || "Client",
+          email: user?.email || "",
+        },
+        theme: {
+          color: "#7E63F8",
+        },
+      };
+
+      const rzpay = new (window as any).Razorpay(options);
+      rzpay.open();
+    } catch (error: any) {
+      toast.dismiss("phase-checkout");
+      console.error("Error paying for phase:", error);
+      toast.error(error.message || "Failed to start payment process");
+    }
+  };
+
   // Handle task status change (Parity with Student view)
   const handleTaskStatusChange = async (taskId: string, newStatus: TaskStatus) => {
     try {
@@ -192,6 +281,7 @@ export const ClientProjectTrackingBoard = ({ projectId, projectCategory }: Clien
       setTasks(updatedTasks);
       setActivities(updatedActivities);
 
+      if (onTaskUpdate) onTaskUpdate();
       toast.success(`Task marked as ${newStatus}`);
     } catch (error) {
       console.error('Error updating task:', error);
@@ -421,9 +511,6 @@ export const ClientProjectTrackingBoard = ({ projectId, projectCategory }: Clien
           <div className="flex gap-3 min-w-max">
             {phaseProgress.map((phase, index) => {
               const color = phaseColors[index % phaseColors.length];
-              const paymentStatus = getPhasePaymentStatus(index, phases.length, activePhaseIndex);
-              const paymentLabel = paymentStatus === 'done' ? 'Done' : paymentStatus === 'pending' ? 'Pending' : 'Not yet started';
-              const paymentClass = paymentStatus === 'done' ? 'text-green-700 bg-green-100' : paymentStatus === 'pending' ? 'text-amber-700 bg-amber-100' : 'text-slate-500 bg-slate-100';
               return (
                 <div key={phase.phase} className="flex-shrink-0 w-56 bg-white border border-slate-200 rounded-sm p-3 shadow-sm">
                   <div className="flex items-start justify-between mb-2.5">
@@ -451,19 +538,38 @@ export const ClientProjectTrackingBoard = ({ projectId, projectCategory }: Clien
                       </div>
                     </div>
                   </div>
-                  <div className="mb-1.5">
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${paymentClass} flex items-center justify-between`}>
-                      <span>Payment: {paymentLabel}</span>
-                      {paymentStatus === 'pending' && (
-                        <button
-                          onClick={() => initializePayment(projectId)}
-                          disabled={isProcessing}
-                          className="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-2 py-0.5 rounded leading-none transition-colors border border-transparent hover:border-blue-800 disabled:opacity-50"
-                        >
-                          {isProcessing ? 'Processing' : 'Pay Now'}
-                        </button>
-                      )}
-                    </span>
+                  <div className="mb-1.5 min-h-[40px] flex flex-col justify-center">
+                    {(() => {
+                      const phaseState = phaseStates.find(p => p.phase_order === index + 1);
+                      if (!phaseState) return null;
+
+                      const paymentStatus = getPhasePaymentStatus(index, phaseStates, tasks, phases);
+
+                      const paymentLabel = phaseState.payment_status === 'paid' ? 'Paid' :
+                        phaseState.payment_status === 'pending_verification' ? 'Processing' :
+                          'Unpaid';
+                      const paymentClass = phaseState.payment_status === 'paid' ? 'text-green-700 bg-green-100' :
+                        phaseState.payment_status === 'pending_verification' ? 'text-blue-700 bg-blue-100' :
+                          'text-slate-500 bg-slate-100';
+
+                      const isNextToPay = paymentStatus === 'pending' && phaseState.payment_status === 'unpaid';
+
+                      return (
+                        <div className="space-y-1.5">
+                          <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${paymentClass} flex items-center justify-between`}>
+                            <span>Payment: {paymentLabel}</span>
+                          </span>
+                          {isNextToPay && (
+                            <button
+                              onClick={() => handlePayPhase(phaseState.id, (projectBudget || 0) / phases.length)}
+                              className="w-full py-1 bg-primary-purple text-white text-[9px] font-bold rounded-sm shadow-sm hover:shadow-md transition-all animate-pulse"
+                            >
+                              Pay Now
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[9px] text-black font-bold">
@@ -501,11 +607,12 @@ export const ClientProjectTrackingBoard = ({ projectId, projectCategory }: Clien
                 }
               }
 
-              const isActive = phaseState?.status === 'active';
+              const isPaid = phaseState?.payment_status === 'paid';
+              const isActive = (phaseState?.status === 'active') && isPaid;
               const isLocked = phaseState?.status === 'locked';
-              const isUnlocked = phaseState?.status === 'unlocked' || !phaseState;
-              const isPending = phaseState?.status === 'pending';
-              const badgeInfo = phaseState ? getPhaseStatusBadge(phaseState.status) : null;
+              const isUnlocked = (phaseState?.status === 'unlocked' || !phaseState);
+              const isPending = (phaseState?.status === 'pending') || (phaseState?.status === 'active' && !isPaid);
+              const badgeInfo = phaseState ? getPhaseStatusBadge(phaseState.status, phaseState.payment_status) : null;
 
               // Check if phase is complete (all tasks done)
               const isPhaseComplete = tasksForPhase.length > 0 && tasksForPhase.every(t => t.status === 'done');
@@ -516,15 +623,33 @@ export const ClientProjectTrackingBoard = ({ projectId, projectCategory }: Clien
               return (
                 <div
                   key={phase}
-                  className={`flex-shrink-0 w-72 rounded-sm border p-3.5 ${isActive
+                  className={`flex-shrink-0 w-72 rounded-sm border p-3.5 relative ${isActive
                     ? 'bg-green-50 border-green-200'
                     : isLocked
                       ? 'bg-slate-100 border-slate-300 opacity-75'
                       : isUnlocked
                         ? 'bg-blue-50 border-blue-200'
-                        : 'bg-slate-50 border-slate-200 opacity-50'
+                        : 'bg-slate-50 border-slate-200 opacity-50 grayscale'
                     }`}
                 >
+                  {/* Payment Pending Overlay for Client */}
+                  {phaseState?.status === 'active' && !isPaid && (
+                    <div className="absolute inset-0 bg-slate-50/40 backdrop-blur-[1px] flex items-center justify-center p-4 z-10 rounded-sm">
+                      <div className="text-center bg-white/90 p-3 rounded-md shadow-sm border border-red-100 w-full max-w-[200px]">
+                        <Badge variant="destructive" className="mb-2">Payment Pending</Badge>
+                        <p className="text-[10px] text-slate-600 font-bold mb-3 leading-tight">
+                          This phase is active but unfunded.<br />
+                          Fund this phase to unlock work.
+                        </p>
+                        <button
+                          onClick={() => handlePayPhase(phaseState.id, (projectBudget || 0) / phases.length)}
+                          className="w-full py-2 bg-primary-purple text-white text-[10px] font-bold rounded-sm shadow-sm hover:shadow-md transition-all animate-pulse"
+                        >
+                          Pay Now
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {/* Phase Header - Read Only */}
                   <div className="flex items-start justify-between mb-3.5">
                     <div className="flex items-center gap-1.5 flex-1">

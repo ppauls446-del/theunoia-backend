@@ -1,6 +1,6 @@
 // Sequential Phase Locking Logic Functions with Dual Approval
 
-import { PhaseState, PhaseStatus, ValidationResult } from './phaseLockingTypes';
+import { PhaseState, PhaseStatus, ValidationResult, PhasePaymentStatus } from './phaseLockingTypes';
 import { Task } from './types';
 
 /**
@@ -42,6 +42,15 @@ export const canChangeTaskStatus = (
     return {
       allowed: false,
       reason: 'This phase is locked and cannot be modified'
+    };
+  }
+
+  // PAYMENT LOCK: If phase is not paid, it's not workable
+  // Skip this check during initial setup (status === 'unlocked')
+  if (phaseState?.payment_status !== 'paid' && phaseState?.status !== 'unlocked') {
+    return {
+      allowed: false,
+      reason: 'Payment for this phase is pending. Work can only resume once payment is confirmed.'
     };
   }
 
@@ -104,6 +113,15 @@ export const canAddTaskToPhase = (
       };
     }
 
+    // PAYMENT LOCK: Even if active, must be paid to add tasks
+    // Skip this check during initial setup (status === 'unlocked')
+    if (phaseState.payment_status !== 'paid' && phaseState.status !== 'unlocked') {
+      return {
+        allowed: false,
+        reason: 'Payment for this phase is pending. You cannot add tasks until payment is confirmed.'
+      };
+    }
+
     if (phase !== activePhase) {
       return {
         allowed: false,
@@ -144,6 +162,14 @@ export const canRequestLockPhase = (
     return {
       allowed: false,
       reason: 'Only active phases can be locked'
+    };
+  }
+
+  // PAYMENT LOCK: Must be paid to request lock (submission)
+  if (phaseState.payment_status !== 'paid') {
+    return {
+      allowed: false,
+      reason: 'Payment for this phase is pending. You cannot submit work until payment is confirmed.'
     };
   }
 
@@ -251,11 +277,27 @@ export const canLockAllPhases = (
 /**
  * Get phase status badge
  */
-export const getPhaseStatusBadge = (status: PhaseStatus): {
+export const getPhaseStatusBadge = (status: PhaseStatus, paymentStatus?: string): {
   label: string;
   variant: 'default' | 'secondary' | 'destructive' | 'outline';
   className: string;
 } => {
+  if (paymentStatus === 'pending_verification') {
+    return {
+      label: 'Processing',
+      variant: 'secondary',
+      className: 'bg-blue-500/10 text-blue-700 border-blue-200'
+    };
+  }
+
+  if (status === 'active' && paymentStatus !== 'paid') {
+    return {
+      label: 'Payment Pending',
+      variant: 'destructive',
+      className: 'bg-red-500/10 text-red-700 border-red-200'
+    };
+  }
+
   switch (status) {
     case 'active':
       return {
@@ -304,34 +346,71 @@ export const getNextPhase = (
   return phases[currentIndex + 1];
 };
 
-/** Payment status for phase: Done (paid upfront), Pending (next to pay), Not yet started */
-export type PhasePaymentStatus = 'done' | 'pending' | 'not_yet_started';
-
 /**
- * Get payment status for a phase in Project Overview.
- * - 3-phase: Phase 1 = Done. When phase 1 is active → Phase 2 = Pending. When phase 2 is active → Phase 3 = Pending.
- * - 4/5/6-phase: Phase 1 & 2 = Done. When phase 1 active → Phase 3 = Pending; phase 2 active → Phase 4 = Pending; etc.
- * @param phaseIndex 0-based index of the phase
- * @param totalPhases number of phases (3, 4, 5, or 6)
- * @param activePhaseIndex 0-based index of the currently active phase, or null if none
+ * Get payment status for a phase.
+ * Strictly Sequential Logic: Phase N is 'pending' (payable) ONLY if:
+ * 1. It is currently 'unpaid'
+ * 2. The phase PRIOR to it (N-1) has reached >= 50% task completion.
  */
 export const getPhasePaymentStatus = (
   phaseIndex: number,
-  totalPhases: number,
-  activePhaseIndex: number | null
+  phaseStates: PhaseState[],
+  tasks: Task[],
+  allPhaseNames: string[]
 ): PhasePaymentStatus => {
-  if (totalPhases === 3) {
-    // 3-phase: only Phase 1 paid initially
-    if (phaseIndex === 0) return 'done';
-    if (activePhaseIndex === 0 && phaseIndex === 1) return 'pending';
-    if (activePhaseIndex === 1 && phaseIndex === 2) return 'pending';
+  const currentPhaseState = phaseStates.find(ps => ps.phase_order === phaseIndex + 1);
+  if (!currentPhaseState) return 'not_yet_started';
+
+  // 1. If already paid, it's done
+  if (currentPhaseState.payment_status === 'paid') return 'done';
+  if (currentPhaseState.payment_status === 'pending_verification') return 'pending';
+
+  // 2. Identify how many phases were paid in advance
+  const advancePhases = allPhaseNames.length > 4 ? 2 : 1;
+
+  // 3. If this phase was part of the advance but isn't marked paid yet, it's not ready
+  if (phaseIndex < advancePhases) {
     return 'not_yet_started';
   }
-  // 4, 5, or 6 phases: Phase 1 & 2 paid initially
-  if (phaseIndex <= 1) return 'done';
-  if (activePhaseIndex === null) return 'not_yet_started';
-  // When phase K is active, phase K+2 payment becomes Pending
-  if (phaseIndex === activePhaseIndex + 2) return 'pending';
-  if (phaseIndex < activePhaseIndex + 2) return 'done'; // already passed
+
+  // 4. Sequential Trigger Logic (Buffer Rule)
+  // Phase N payment triggers when Phase N - offset is 50% complete.
+  // For >4 phases: offset = 2 (e.g., Phase 3 triggers on Phase 1 @ 50%)
+  // For <=4 phases: offset = 1 (e.g., Phase 2 triggers on Phase 1 @ 50%)
+  const offset = allPhaseNames.length > 4 ? 2 : 1;
+  const targetIndex = phaseIndex - offset;
+
+  if (targetIndex < 0) return 'not_yet_started';
+
+  const targetPhaseName = allPhaseNames[targetIndex];
+  const targetPhaseTasks = tasks.filter(t => t.phase === targetPhaseName);
+
+  // If target phase has no tasks, it can't reach 50% completion yet (unless it's empty by design?)
+  // For now, if no tasks, we assume it's not ready to trigger next payment.
+  if (targetPhaseTasks.length === 0) return 'not_yet_started';
+
+  const completedTasks = targetPhaseTasks.filter(t => t.status === 'done').length;
+  const progress = completedTasks / targetPhaseTasks.length;
+
+  if (progress >= 0.5) {
+    return 'pending';
+  }
+
   return 'not_yet_started';
+};
+
+/**
+ * Check if a phase can be unlocked (moved from pending to active)
+ * Must be paid.
+ */
+export const canUnlockPhase = (
+  phaseState: PhaseState
+): ValidationResult => {
+  if (phaseState.payment_status !== 'paid') {
+    return {
+      allowed: false,
+      reason: 'Payment for this phase is pending. Please complete the payment to continue.'
+    };
+  }
+  return { allowed: true };
 };

@@ -561,7 +561,7 @@ export const ProjectTrackingBoard = ({ projectId, projectCategory }: ProjectTrac
           <div className="flex gap-3 min-w-max">
             {phaseProgress.map((phase, index) => {
               const color = phaseColors[index % phaseColors.length];
-              const paymentStatus = getPhasePaymentStatus(index, phases.length, activePhaseIndex);
+              const paymentStatus = getPhasePaymentStatus(index, phaseStates, tasks, phases);
               const paymentLabel = paymentStatus === 'done' ? 'Done' : paymentStatus === 'pending' ? 'Pending' : 'Not yet started';
               const paymentClass = paymentStatus === 'done' ? 'text-green-700 bg-green-100' : paymentStatus === 'pending' ? 'text-amber-700 bg-amber-100' : 'text-slate-500 bg-slate-100';
               return (
@@ -648,17 +648,18 @@ export const ProjectTrackingBoard = ({ projectId, projectCategory }: ProjectTrac
               // Keep unlocked status as is for initial setup
               const effectiveStatus = phaseState?.status;
 
-              const isActive = effectiveStatus === 'active';
-              const isLocked = effectiveStatus === 'locked'; // This means COMPLETED
-              const isPending = effectiveStatus === 'pending';
-              const isUnlocked = effectiveStatus === 'unlocked';
-
-              const canAddOrEdit = isActive || isUnlocked;
+              const isPaid = phaseState?.payment_status === 'paid';
+              const isActive = (phaseState?.status === 'active') && isPaid;
+              const isLocked = phaseState?.status === 'locked';
+              const isUnlocked = (phaseState?.status === 'unlocked' || !phaseState);
+              const isPending = (phaseState?.status === 'pending') || (phaseState?.status === 'active' && !isPaid);
+              const isProcessing = phaseState?.payment_status === 'pending_verification';
+              const canAddOrEdit = (isActive && isPaid) || isUnlocked;
 
               // Any other status (pending, unlocked, or missing) is effectively "Future/Locked" for visual purposes
               // Wait, unlocked is not future, it's active-like.
               const isFuture = !canAddOrEdit && !isLocked;
-              const badgeInfo = phaseState ? getPhaseStatusBadge(effectiveStatus as any) : null;
+              const badgeInfo = phaseState ? getPhaseStatusBadge(effectiveStatus as any, phaseState.payment_status) : null;
 
               // Check if phase is complete (all tasks done)
               const isPhaseComplete = phaseTasks.length > 0 && phaseTasks.every(t => t.status === 'done');
@@ -679,13 +680,25 @@ export const ProjectTrackingBoard = ({ projectId, projectCategory }: ProjectTrac
               return (
                 <div
                   key={phase}
-                  className={`flex-shrink-0 w-72 rounded-sm border p-3.5 ${canAddOrEdit
+                  className={`flex-shrink-0 w-72 rounded-sm border p-3.5 relative ${canAddOrEdit
                     ? 'bg-blue-50/50 border-blue-200'
                     : isLocked
                       ? 'bg-slate-100 border-slate-300 opacity-75' // Completed
                       : 'bg-slate-50 border-slate-200 opacity-40 grayscale' // Pending/Future
                     }`}
                 >
+                  {/* Payment Pending Overlay for Freelancer */}
+                  {phaseState?.status === 'active' && !isPaid && (
+                    <div className="absolute inset-0 bg-slate-50/40 backdrop-blur-[1px] flex items-center justify-center p-4 z-10 rounded-sm">
+                      <div className="text-center bg-white/90 p-3 rounded-md shadow-sm border border-red-100">
+                        <Badge variant="destructive" className="mb-2">Payment Pending</Badge>
+                        <p className="text-[10px] text-slate-600 font-bold leading-tight">
+                          This phase is active but unfunded.<br />
+                          Work is locked until payment is confirmed.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {/* Phase Header */}
                   <div className="flex items-start justify-between mb-3.5">
                     <div className="flex items-center gap-1.5 flex-1">

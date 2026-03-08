@@ -64,13 +64,17 @@ export const TaskCard = ({ task, onStatusChange, disabled = false }: TaskCardPro
       <div className="flex items-center gap-1.5 mb-1.5">
         <span className="text-[11px] text-slate-600 font-medium">Status:</span>
         <button
-          onClick={() => handleStatusSelect(task.status === 'done' ? 'to-do' : 'done')}
-          disabled={disabled}
+          onClick={() => {
+            if (task.status !== 'done') {
+              handleStatusSelect('done');
+            }
+          }}
+          disabled={disabled || task.status === 'done'}
           className={`flex items-center gap-1 px-1.5 py-0.5 rounded-sm border transition-all ${task.status === 'done'
-            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+            ? 'bg-green-50 text-green-700 border-green-200 opacity-90'
             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-            } ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-          title={task.status === 'done' ? "Mark as Not Done" : "Mark as Done"}
+            } ${(disabled || task.status === 'done') ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          title={task.status === 'done' ? "Task is completed" : "Mark as Done"}
         >
           {task.status === 'done' ? (
             <div className="flex items-center gap-1">
